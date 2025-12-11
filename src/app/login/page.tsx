@@ -98,7 +98,10 @@ export default function LoginPage() {
                 </div>
                 <Input
                   type="email"
-                  placeholder="usuario@praiastur.com"
+                  name="email"
+                  id="email"
+                  autoComplete="email"
+                  placeholder="usuario@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10 h-11 bg-gray-50 border-gray-200 text-gray-900 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
@@ -127,6 +130,9 @@ export default function LoginPage() {
                 </div>
                 <Input
                   type="password"
+                  name="password"
+                  id="password"
+                  autoComplete="current-password"
                   placeholder="••••••••"
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}

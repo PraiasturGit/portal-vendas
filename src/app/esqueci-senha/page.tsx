@@ -27,7 +27,7 @@ export default function EsqueciSenhaPage() {
       // 🔴 MUDANÇA AQUI:
       // 1. Usamos 'axios' direto (para não mandar token)
       // 2. Corrigimos a rota para '/esqueci-senha' (igual definimos no backend)
-      await axios.post(`${apiUrl}/api/auth-vendedor/esqueci-senha`, { email });
+      await axios.post(`${apiUrl}api/auth-vendedor/esqueci-senha`, { email });
 
       setStatus({
         tipo: "sucesso",
@@ -46,8 +46,6 @@ export default function EsqueciSenhaPage() {
       setLoading(false);
     }
   }
-
-  // ... (resto do código igual)
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 font-sans">

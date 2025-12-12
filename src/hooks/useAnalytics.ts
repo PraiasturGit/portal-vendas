@@ -2,6 +2,14 @@ import { useState, useEffect, useCallback } from "react";
 import api from "@/service/api";
 import { useAuth } from "@/context/AuthContext";
 
+interface FiltrosState {
+  mes: number;
+  ano: number;
+  tipo_venda: string;
+  id_vendedor: string;
+  data_inicial?: string; // Opcional
+  data_final?: string; // Opcional
+}
 export function useAnalytics() {
   const { user } = useAuth();
 
@@ -17,7 +25,7 @@ export function useAnalytics() {
 
   // Filtros
   const [selectedSupervisor, setSelectedSupervisor] = useState("");
-  const [filtros, setFiltros] = useState({
+  const [filtros, setFiltros] = useState<FiltrosState>({
     mes: new Date().getMonth() + 1,
     ano: new Date().getFullYear(),
     tipo_venda: "TODOS",
@@ -52,16 +60,24 @@ export function useAnalytics() {
       // Lógica de privilégio: Se Admin selecionou supervisor, usa ele. Se não, usa o próprio user.
       const supId =
         selectedSupervisor ||
-        (user?.role === "SUPERVISOR" ? user.sub : undefined);
+        (user?.role === "SUPERVISOR" ? user.id : undefined); // Dica: verifique se é user.id ou user.sub no seu AuthContext
 
-      const requestParams = {
+      // MUDANÇA AQUI: Criamos um objeto base e adicionamos datas se existirem
+      const requestParams: any = {
         supervisor_id: supId,
         mes: filtros.mes,
         ano: filtros.ano,
         tipo_venda: filtros.tipo_venda,
         id_vendedor_filtro: filtros.id_vendedor,
       };
+
+      // Se o usuário preencheu datas no filtro, enviamos junto!
+      if (filtros.data_inicial)
+        requestParams.data_inicial = filtros.data_inicial;
+      if (filtros.data_final) requestParams.data_final = filtros.data_final;
+
       console.log("🔍 [FRONT] Enviando params:", requestParams);
+
       const [resMetricas, resHist] = await Promise.all([
         api.get("/api/dashboard/metricas", { params: requestParams }),
         api.get("/api/dashboard/vendas", { params: requestParams }),
@@ -75,7 +91,6 @@ export function useAnalytics() {
       setLoading(false);
     }
   }, [filtros, selectedSupervisor, user]);
-
   // --- EFEITOS ---
 
   // 1. Inicialização

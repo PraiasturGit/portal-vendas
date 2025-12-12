@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { LogOut, User, ShieldCheck, Sun, Menu, Briefcase } from "lucide-react";
+import { LogOut, User, ShieldCheck, Briefcase, Menu } from "lucide-react";
 
 import { useState } from "react";
 
@@ -44,6 +44,10 @@ export function Header() {
 
   const badge = getRoleBadge();
 
+  // Proteção: Garante que temos uma string para trabalhar, mesmo que user.nome venha undefined
+  const nomeCompleto = user.nome || "";
+  const primeiroNome = nomeCompleto.split(" ")[0];
+
   return (
     <header className="bg-white border-b border-gray-100 sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -51,21 +55,16 @@ export function Header() {
           {/* --- LOGO (Esquerda) --- */}
           <div className="flex items-center gap-2">
             <Link href="/dashboard" className="flex items-center gap-3 group">
-              {/* ÁREA DA IMAGEM */}
-              {/* 'relative' é necessário para o 'fill' funcionar. 
-                  h-10 w-10 (40px) é um tamanho padrão bom para headers. */}
               <div className="relative h-16 w-16 overflow-hidden">
                 <Image
-                  src="/Logo-P.png" 
+                  src="/Logo-P.png"
                   alt="Logo Praiastur"
-                  fill // Ocupa todo o espaço da div pai (h-10 w-10)
-                  className="object-contain" // Garante que o logo não fique esticado/achatado
-                  priority // Carrega instantaneamente (sem lazy load)
+                  fill
+                  className="object-contain"
+                  priority
                 />
               </div>
 
-              {/* ÁREA DO TEXTO */}
-              {/* Se o seu logo JÁ TIVER o nome escrito, você pode apagar essa div inteira abaixo */}
               <div className="flex flex-col">
                 <span className="font-bold text-gray-800 text-lg leading-none tracking-tight">
                   Praiastur
@@ -93,7 +92,8 @@ export function Header() {
             <div className="flex items-center gap-4">
               <div className="text-right">
                 <p className="text-sm font-bold text-gray-700 leading-none">
-                  {user.nome.split(" ")[0]} {/* Apenas o primeiro nome */}
+                  {/* AQUI ESTAVA O ERRO: Agora usamos a variável protegida */}
+                  {primeiroNome}
                 </p>
                 <p className="text-[10px] text-gray-400">{user.email}</p>
               </div>
@@ -128,7 +128,7 @@ export function Header() {
               <User className="h-5 w-5 text-gray-500" />
             </div>
             <div>
-              <p className="font-bold text-gray-800">{user.nome}</p>
+              <p className="font-bold text-gray-800">{nomeCompleto}</p>
               <p className="text-xs text-gray-500">{badge.text}</p>
             </div>
           </div>

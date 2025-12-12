@@ -12,13 +12,12 @@ import {
   Calendar,
 } from "lucide-react";
 
-// Imports organizados
 import { useAnalytics } from "@/hooks/useAnalytics";
-import { AnalyticsFilters } from "@/components/analytics/AnalyticsFilters"; // Supondo que você criou na pasta
+import { AnalyticsFilters } from "@/components/analytics/AnalyticsFilters";
 import { CardKPI, BadgeStatus } from "@/components/analytics/AnalyticsUI";
+import { TabConvites } from "@/components/analytics/TabConvites";
 
 export default function AnalyticsPage() {
-  // Toda a lógica vem daqui numa linha só
   const {
     user,
     metricas,
@@ -33,6 +32,10 @@ export default function AnalyticsPage() {
     selectedSupervisor,
     setSelectedSupervisor,
   } = useAnalytics();
+
+  const rankingConvites = metricas?.ranking
+    ? metricas.ranking.slice().sort((a: any, b: any) => b.convites - a.convites)
+    : [];
 
   const formatMoney = (val: number) =>
     new Intl.NumberFormat("pt-BR", {
@@ -128,9 +131,9 @@ export default function AnalyticsPage() {
         </div>
       ) : (
         <main className="animate-fade-in">
+          {/* ================= ABA DE VENDAS (Idealmente mover para TabVendas.tsx também) ================= */}
           {activeTab === "vendas" && (
             <div className="space-y-6">
-              {/* KPIs */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <CardKPI
                   title="Vendas Totais"
@@ -155,7 +158,7 @@ export default function AnalyticsPage() {
                 />
               </div>
 
-              {/* TABELA */}
+              {/* TABELA DE VENDAS */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-6 border-b border-gray-50 flex justify-between items-center">
                   <h3 className="font-bold text-lg text-gray-800">
@@ -169,19 +172,10 @@ export default function AnalyticsPage() {
                   <table className="w-full text-sm text-left">
                     <thead className="bg-gray-50 text-gray-500 uppercase font-semibold">
                       <tr>
-                        {/* 1. DATA (Movida para o início) */}
                         <th className="p-4">Data</th>
-
                         <th className="p-4">Contrato</th>
-
-                        {/* 2. CLIENTE REMOVIDO DAQUI */}
-
                         <th className="p-4">Vendedor</th>
-
-                        {/* 3. NOVAS COLUNAS */}
                         <th className="p-4">Tipo</th>
-                        <th className="p-4">Entrada</th>
-
                         <th className="p-4">Valor</th>
                         <th className="p-4">Status</th>
                       </tr>
@@ -190,54 +184,37 @@ export default function AnalyticsPage() {
                       {Array.isArray(historicoVendas) &&
                         historicoVendas.map((venda: any) => (
                           <tr key={venda.id} className="hover:bg-gray-50">
-                            {/* 1. DATA formatada */}
                             <td className="p-4 text-gray-500 font-medium">
                               {new Date(venda.data_venda).toLocaleDateString(
                                 "pt-BR"
                               )}
                             </td>
-
                             <td className="p-4 font-medium text-gray-600">
                               {venda.numero_contrato}
                             </td>
-
-                            {/* VENDEDOR (Já corrigido com a lógica do backend) */}
                             <td className="p-4 text-blue-600 font-medium">
                               {venda.nome_vendedor}
                             </td>
-
-                            {/* 2. TIPO DE VENDA (Ex: ONLINE) */}
                             <td className="p-4 text-xs font-bold text-gray-500 uppercase">
                               {venda.tipo_venda || "-"}
-                            </td>
-
-                            {/* 3. FORMA DE PAGAMENTO DA ENTRADA */}
-                            <td className="p-4 text-gray-600 text-sm">
-                              {/* Formata para ficar bonitinho, ex: Pix -> PIX */}
-                              {venda.forma_pagamento_entrada?.toUpperCase() ||
-                                "S/ ENTRADA"}
                             </td>
 
                             <td className="p-4 text-green-600 font-bold">
                               {formatMoney(venda.valor_total)}
                             </td>
-
                             <td className="p-4">
                               <BadgeStatus status={venda.status} />
                             </td>
                           </tr>
                         ))}
-
-                      {/* Estado Vazio */}
                       {(!Array.isArray(historicoVendas) ||
                         historicoVendas.length === 0) && (
                         <tr>
-                          {/* Ajustado o ColSpan para 7 colunas agora */}
                           <td
                             colSpan={7}
                             className="p-8 text-center text-gray-400"
                           >
-                            Nenhuma venda encontrada para este filtro.
+                            Nenhuma venda encontrada.
                           </td>
                         </tr>
                       )}
@@ -248,10 +225,128 @@ export default function AnalyticsPage() {
             </div>
           )}
 
+          {/* ================= ABA DE CONVITES ================= */}
+          {/* Aqui chamamos o componente limpo */}
           {activeTab === "convites" && (
-            <div className="text-center py-10 text-gray-400 bg-white border border-dashed rounded-xl">
-              <Ticket className="mx-auto mb-2" size={32} />
-              Implementação da aba de convites pendente.
+            <div className="space-y-6 animate-fade-in">
+              {/* BLOCO 1: KPIs Convites */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <CardKPI
+                  title="Total de Convites"
+                  value={metricas.convites?.total || 0}
+                  subtitle="No período selecionado"
+                  icon={<Ticket className="text-purple-600" />}
+                  color="purple"
+                />
+                <CardKPI
+                  title="Convites Hoje"
+                  value={metricas.convites?.hoje || 0}
+                  subtitle="Cadastrados hoje"
+                  icon={<Calendar className="text-pink-600" />}
+                  color="pink"
+                />
+              </div>
+
+              {/* BLOCO 2: RANKING E GRÁFICO */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* RANKING (Ordenado por Convites) */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
+                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                    <Users size={18} className="text-gray-500" />
+                    Ranking de Convites
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 text-gray-500 uppercase font-semibold text-xs">
+                        <tr>
+                          <th className="p-3 text-left">#</th>
+                          <th className="p-3 text-left">Vendedor</th>
+                          <th className="p-3 text-center text-gray-400">
+                            Vendas
+                          </th>
+                          <th className="p-3 text-center text-purple-600 bg-purple-50 rounded-t-lg">
+                            Convites
+                          </th>
+                          <th className="p-3 text-right text-gray-400">
+                            Faturamento
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {rankingConvites.map((vendedor: any, index: number) => (
+                          <tr
+                            key={index}
+                            className="hover:bg-gray-50 transition-colors"
+                          >
+                            <td className="p-3 font-bold text-gray-400 w-10">
+                              {index + 1}º
+                            </td>
+                            <td className="p-3 font-medium text-gray-800">
+                              {vendedor.nome_completo}
+                            </td>
+                            <td className="p-3 text-center text-gray-400">
+                              {vendedor.vendas}
+                            </td>
+                            <td className="p-3 text-center font-bold text-purple-600 bg-purple-50/50 text-lg">
+                              {vendedor.convites}
+                            </td>
+                            <td className="p-3 text-right text-gray-400">
+                              {formatMoney(vendedor.faturamento)}
+                            </td>
+                          </tr>
+                        ))}
+                        {rankingConvites.length === 0 && (
+                          <tr>
+                            <td
+                              colSpan={5}
+                              className="p-6 text-center text-gray-400"
+                            >
+                              Nenhum convite registrado neste período.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* GRÁFICO (Mantido para contexto financeiro, ou pode ser removido se desejar limpar a tela) */}
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                    <TrendingUp size={18} className="text-gray-500" />
+                    Performance Financeira
+                  </h3>
+                  <div className="space-y-4">
+                    {metricas.grafico?.map((dia: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between text-sm"
+                      >
+                        <span className="text-gray-500 w-10">
+                          {dia.data_formatada}
+                        </span>
+                        <div className="flex-1 mx-3 h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-500 rounded-full"
+                            style={{
+                              width: `${Math.min(
+                                (dia.valor /
+                                  (metricas.vendas?.total_valor || 1)) *
+                                  100 *
+                                  5,
+                                100
+                              )}%`,
+                            }}
+                          ></div>
+                        </div>
+                        <span className="font-bold text-gray-700 text-xs">
+                          {formatMoney(dia.valor)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </main>

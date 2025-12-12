@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import axios from "axios";
+// ⚠️ Importe sua instância configurada do axios (api.ts) em vez do axios puro
+// Isso garante que a URL base esteja certa (ex: localhost:3001)
+//import api from "@/service/api";
 import { Mail, Loader2, ArrowLeft, KeyRound } from "lucide-react";
 import Link from "next/link";
+import axios from "axios";
 
 export default function EsqueciSenhaPage() {
   const [email, setEmail] = useState("");
@@ -20,6 +23,10 @@ export default function EsqueciSenhaPage() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+
+      // 🔴 MUDANÇA AQUI:
+      // 1. Usamos 'axios' direto (para não mandar token)
+      // 2. Corrigimos a rota para '/esqueci-senha' (igual definimos no backend)
       await axios.post(`${apiUrl}/api/auth-vendedor/esqueci-senha`, { email });
 
       setStatus({
@@ -28,14 +35,19 @@ export default function EsqueciSenhaPage() {
       });
       setEmail("");
     } catch (error: any) {
+      console.error(error);
       const msg =
+        error.response?.data?.message ||
         error.response?.data?.error ||
         "Erro ao solicitar recuperação. Tente novamente.";
+
       setStatus({ tipo: "erro", msg });
     } finally {
       setLoading(false);
     }
   }
+
+  // ... (resto do código igual)
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4 font-sans">
@@ -86,7 +98,6 @@ export default function EsqueciSenhaPage() {
             </div>
           </div>
 
-          {/* CORREÇÃO: Usei bg-orange-500 que é padrão e adicionei h-12 para garantir altura */}
           <button
             type="submit"
             disabled={loading}
@@ -105,8 +116,9 @@ export default function EsqueciSenhaPage() {
         </form>
 
         <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+          {/* ✅ Link volta para a raiz (login) */}
           <Link
-            href="/login"
+            href="/"
             className="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-orange-600 transition-colors"
           >
             <ArrowLeft size={16} /> Voltar para o Login

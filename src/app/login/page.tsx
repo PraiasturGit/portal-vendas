@@ -8,7 +8,8 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
-import { Lock, Mail } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff } from "lucide-react";
+import { ForgotPasswordModal } from "@/components/esqueciSenha";
 
 export default function LoginPage() {
   const { signIn } = useAuth();
@@ -18,17 +19,16 @@ export default function LoginPage() {
   const [senha, setSenha] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      // O signIn agora retorna os dados do usuário
       const user = await signIn({ email, password: senha });
 
-      // LÓGICA DE REDIRECIONAMENTO POR CARGO
       switch (user.role) {
         case "ADMIN":
           router.push("/");
@@ -55,20 +55,16 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4 font-sans text-gray-900">
-      {/* Card Principal */}
       <Card className="w-full max-w-md shadow-xl shadow-orange-500/5 border-0 bg-white relative overflow-hidden p-0">
-        {/* Barra de destaque superior (Laranja Praiastur) */}
         <div className="absolute top-0 left-0 w-full h-1.5 bg-orange-500"></div>
 
-        {/* Header Personalizado */}
         <div className="space-y-4 text-center pb-8 pt-12 px-6">
-          {/* Logo Icon (Sol/Energia) */}
           <div className="mx-auto bg-orange-50 w-24 h-24 rounded-2xl flex items-center justify-center mb-4 group transition-all duration-300 hover:bg-orange-100">
             <Image
               src="/Logo-P.png"
               alt="Logo Praiastur"
-              width={70} // Aumentei de 40 para 70
-              height={70} // Aumentei de 40 para 70
+              width={70}
+              height={70}
               className="group-hover:scale-110 transition-transform duration-300 object-contain"
               priority
             />
@@ -116,7 +112,6 @@ export default function LoginPage() {
                 <label className="text-xs font-bold text-gray-600 uppercase tracking-wide ml-1">
                   Senha
                 </label>
-                {/* CORREÇÃO: Agora usamos o Link do Next.js para a rota correta */}
                 <Link
                   href="/esqueci-senha"
                   className="text-xs text-orange-600 hover:text-orange-700 font-medium hover:underline transition-all"
@@ -129,16 +124,28 @@ export default function LoginPage() {
                   <Lock className="h-5 w-5 text-gray-400 group-focus-within:text-orange-500 transition-colors" />
                 </div>
                 <Input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   id="password"
                   autoComplete="current-password"
                   placeholder="••••••••"
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
-                  className="pl-10 h-11 bg-gray-50 border-gray-200 text-gray-900 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
+                  className="pl-10 pr-10 h-11 bg-gray-50 border-gray-200 text-gray-900 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all"
                   required
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-gray-400 hover:text-orange-600 transition-color focus:outline-none"
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar  senha"}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
               </div>
             </div>
 

@@ -66,7 +66,7 @@ export function ModalDecisaoVenda({
                   Gerar Contrato Digital
                 </span>
                 <span className="text-xs text-green-700">
-                  Envia link para WhatsApp (ClickSign)
+                  Envia link para WhatsApp
                 </span>
               </div>
               {loading && (

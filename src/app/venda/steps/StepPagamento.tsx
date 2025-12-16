@@ -30,6 +30,33 @@ const TABELA_OURO_2025 = [
   { p: 24, v: 215.0 },
 ];
 
+const TABELA_PRATA_2025 = [
+  { p: 1, v: 3400.0 },
+  { p: 2, v: 1710.0 },
+  { p: 3, v: 1150.0 },
+  { p: 4, v: 875.0 },
+  { p: 5, v: 708.0 },
+  { p: 6, v: 600.0 },
+  { p: 7, v: 520.0 },
+  { p: 8, v: 460.0 },
+  { p: 9, v: 410.0 },
+  { p: 10, v: 374.0 },
+  { p: 11, v: 345.0 },
+  { p: 12, v: 320.0 },
+  { p: 13, v: 310.0 },
+  { p: 14, v: 300.0 },
+  { p: 15, v: 290.0 },
+  { p: 16, v: 280.0 },
+  { p: 17, v: 270.0 },
+  { p: 18, v: 260.0 },
+  { p: 19, v: 255.0 },
+  { p: 20, v: 245.0 },
+  { p: 21, v: 235.0 },
+  { p: 22, v: 225.0 },
+  { p: 23, v: 215.0 },
+  { p: 24, v: 200.0 },
+];
+
 // --- LISTA 1: OPÇÕES PARA ENTRADA (Conforme vendaService.js - FORMA_PAGAMENTO_ENTRADA_MAP) ---
 const OPCOES_ENTRADA = [
   { label: "Pix", value: "Pix" }, // Backend espera "Pix"
@@ -97,7 +124,7 @@ export function StepPagamento({
   };
 
   const isPlanoOuro = formData.tipoContratoNome === "Ouro";
-
+  const isPlanoPrata = formData.tipoContratoNome === "Prata";
   return (
     <Card>
       <CardHeader title="Negociação e Pagamento" />
@@ -107,7 +134,7 @@ export function StepPagamento({
       ================================================================= */}
       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-8">
         <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wide mb-4 border-b pb-2 border-gray-300">
-          1. Dados da Entrada (Sinal)
+          1. Dados da Entrada
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -197,17 +224,17 @@ export function StepPagamento({
             name="valorTotalPlano"
             type="number"
             value={formData.valorTotalPlano || ""}
-            onChange={handleChange}
+            readOnly
+            // onChange={handleChange}
             required
             placeholder="Selecione na tabela ou digite"
+            className="bg-gray-100 cursor-not-allowed text-gray-500 opacity-60"
           />
         </div>
 
         {/* TABELA DE PREÇOS (OURO) */}
         {isPlanoOuro && (
-          // 1. Container: Borda cinza suave (gray-200) em vez de amarelo
           <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
-            {/* 2. Título: Cinza discreto (gray-500) em vez de amarelo forte */}
             <h3 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
               Tabela Ouro 2025
             </h3>
@@ -252,6 +279,54 @@ export function StepPagamento({
           </div>
         )}
 
+        {/* TABELA DE PREÇOS (PRATA) */}
+
+        {isPlanoPrata && (
+          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
+            {/* 2. Título: Cinza discreto (gray-500) em vez de amarelo forte */}
+            <h3 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
+              Tabela Prata 2025
+            </h3>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-52 overflow-y-auto pr-2 custom-scrollbar">
+              {TABELA_PRATA_2025.map((item) => {
+                const totalOpcao = (item.p * item.v).toFixed(2);
+                const isSelected = formData.valorTotalPlano === totalOpcao;
+                return (
+                  <button
+                    key={item.p}
+                    type="button"
+                    onClick={() => handleSelecionarOpcao(item.p, item.v)}
+                    className={`
+                      flex justify-between items-center p-2 rounded text-xs transition-all border
+                      ${
+                        isSelected
+                          ? "bg-orange-500 text-white border-orange-600 shadow-md transform scale-[1.02]"
+                          : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
+                        // 3. Hover: Agora é cinza um pouco mais escuro, removi o amarelo
+                      }
+                    `}
+                  >
+                    <span
+                      className={`font-semibold ${
+                        isSelected ? "text-orange-100" : "text-gray-500"
+                      }`}
+                    >
+                      {item.p}x
+                    </span>
+                    <span
+                      className={`font-bold ${
+                        isSelected ? "text-white" : "text-gray-800"
+                      }`}
+                    >
+                      {formatMoney(item.v)}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
             <label className="text-sm font-bold text-gray-900">

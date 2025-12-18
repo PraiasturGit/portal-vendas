@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { ArrowLeft, Send, Ticket } from "lucide-react";
-import { ForgotPasswordModal } from "@/components/esqueciSenha";
 export default function ConvitePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);

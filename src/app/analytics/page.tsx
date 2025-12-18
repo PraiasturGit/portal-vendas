@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import {
   ArrowLeft,
   TrendingUp,
@@ -10,12 +11,13 @@ import {
   BadgeDollarSign,
   Ticket,
   Calendar,
+  List,
+  LayoutList,
 } from "lucide-react";
 
 import { useAnalytics } from "@/hooks/useAnalytics";
 import { AnalyticsFilters } from "@/components/analytics/AnalyticsFilters";
 import { CardKPI, BadgeStatus } from "@/components/analytics/AnalyticsUI";
-import { TabConvites } from "@/components/analytics/TabConvites";
 
 export default function AnalyticsPage() {
   const {
@@ -33,9 +35,9 @@ export default function AnalyticsPage() {
     setSelectedSupervisor,
   } = useAnalytics();
 
-  const rankingConvites = metricas?.ranking
-    ? metricas.ranking.slice().sort((a: any, b: any) => b.convites - a.convites)
-    : [];
+  const [modoVisualizacao, setModoVisualizacao] = useState<
+    "resumido" | "completo"
+  >("resumido");
 
   const formatMoney = (val: number) =>
     new Intl.NumberFormat("pt-BR", {
@@ -43,6 +45,32 @@ export default function AnalyticsPage() {
       currency: "BRL",
     }).format(val);
 
+  const convitesAgrupados = useMemo(() => {
+    if (!metricas?.listaDetalhadaConvites) return [];
+
+    const agrupamento: Record<string, any> = {};
+
+    metricas.listaDetalhadaConvites.forEach((convite: any) => {
+      const dataObj = new Date(convite.dataCriacao);
+      const dataFormatada = dataObj.toLocaleDateString("pt-BR");
+      const nomeVendedor = convite.vendedor || "Desconhecido";
+      const chave = `${dataFormatada}-${nomeVendedor}`;
+
+      if (!agrupamento[chave]) {
+        agrupamento[chave] = {
+          dataExibicao: dataFormatada,
+          vendedor: nomeVendedor,
+          qtd: 0,
+          timestamp: dataObj.getTime(),
+        };
+      }
+      agrupamento[chave].qtd += 1;
+    });
+
+    return Object.values(agrupamento).sort(
+      (a: any, b: any) => b.timestamp - a.timestamp
+    );
+  }, [metricas?.listaDetalhadaConvites]);
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-8 font-sans text-gray-800">
       {/* HEADER */}
@@ -229,122 +257,137 @@ export default function AnalyticsPage() {
           {/* Aqui chamamos o componente limpo */}
           {activeTab === "convites" && (
             <div className="space-y-6 animate-fade-in">
-              {/* BLOCO 1: KPIs Convites */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <CardKPI
-                  title="Total de Convites"
-                  value={metricas.convites?.total || 0}
-                  subtitle="No período selecionado"
-                  icon={<Ticket className="text-purple-600" />}
-                  color="purple"
-                />
-                <CardKPI
-                  title="Convites Hoje"
-                  value={metricas.convites?.hoje || 0}
-                  subtitle="Cadastrados hoje"
-                  icon={<Calendar className="text-pink-600" />}
-                  color="pink"
-                />
+              {/* 4. BOTÕES DE ALTERNÂNCIA (TOGGLE) - MANTENHA IGUAL */}
+              <div className="flex justify-end gap-2 mb-2">
+                <button
+                  onClick={() => setModoVisualizacao("resumido")}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg flex items-center gap-2 transition-all ${
+                    modoVisualizacao === "resumido"
+                      ? "bg-purple-100 text-purple-700 shadow-sm"
+                      : "bg-white text-gray-500 hover:bg-gray-100 border border-gray-200"
+                  }`}
+                >
+                  <LayoutList size={14} /> Visão Resumida
+                </button>
+                <button
+                  onClick={() => setModoVisualizacao("completo")}
+                  className={`px-3 py-1.5 text-xs font-bold rounded-lg flex items-center gap-2 transition-all ${
+                    modoVisualizacao === "completo"
+                      ? "bg-purple-100 text-purple-700 shadow-sm"
+                      : "bg-white text-gray-500 hover:bg-gray-100 border border-gray-200"
+                  }`}
+                >
+                  <List size={14} /> Histórico Completo
+                </button>
               </div>
 
-              {/* BLOCO 2: RANKING E GRÁFICO */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* RANKING (Ordenado por Convites) */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 lg:col-span-2">
-                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                    <Users size={18} className="text-gray-500" />
-                    Ranking de Convites
+              <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+                  <h3 className="font-bold text-lg text-gray-800">
+                    {modoVisualizacao === "resumido"
+                      ? "Convites (Consolidado)"
+                      : "Histórico Detalhado"}
                   </h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-gray-50 text-gray-500 uppercase font-semibold text-xs">
-                        <tr>
-                          <th className="p-3 text-left">#</th>
-                          <th className="p-3 text-left">Vendedor</th>
-                          <th className="p-3 text-center text-gray-400">
-                            Vendas
-                          </th>
-                          <th className="p-3 text-center text-purple-600 bg-purple-50 rounded-t-lg">
-                            Convites
-                          </th>
-                          <th className="p-3 text-right text-gray-400">
-                            Faturamento
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-gray-100">
-                        {rankingConvites.map((vendedor: any, index: number) => (
-                          <tr
-                            key={index}
-                            className="hover:bg-gray-50 transition-colors"
-                          >
-                            <td className="p-3 font-bold text-gray-400 w-10">
-                              {index + 1}º
+
+                  {/* --- MUDANÇA 1: BADGE COM TOTAL ENTREGUE --- */}
+                  <span className="text-xs font-medium bg-purple-100 px-2 py-1 rounded text-purple-600">
+                    {modoVisualizacao === "resumido"
+                      ? `${
+                          metricas.listaDetalhadaConvites?.length || 0
+                        } entregues (em ${convitesAgrupados.length} grupos)`
+                      : `${
+                          metricas.listaDetalhadaConvites?.length || 0
+                        } registros totais`}
+                  </span>
+                  {/* ------------------------------------------- */}
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-gray-50 text-gray-500 uppercase font-semibold">
+                      <tr>
+                        {modoVisualizacao === "resumido" ? (
+                          <>
+                            <th className="p-4">Data</th>
+                            <th className="p-4">Vendedor</th>
+
+                            {/* --- MUDANÇA 2: TÍTULO DA COLUNA --- */}
+                            <th className="p-4 text-center">Total Entregue</th>
+                            {/* ----------------------------------- */}
+
+                            <th className="p-4 text-right">Visão</th>
+                          </>
+                        ) : (
+                          <>
+                            <th className="p-4">Hora/Data</th>
+                            <th className="p-4">Vendedor</th>
+                            <th className="p-4 text-right">Status</th>
+                          </>
+                        )}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {/* O CORPO DA TABELA PODE FICAR IGUAL AO QUE JÁ ESTAVA */}
+                      {modoVisualizacao === "resumido" &&
+                        convitesAgrupados.map((item: any, idx: number) => (
+                          <tr key={idx} className="hover:bg-gray-50">
+                            <td className="p-4 text-gray-500 font-medium">
+                              {item.dataExibicao}
                             </td>
-                            <td className="p-3 font-medium text-gray-800">
-                              {vendedor.nome_completo}
+                            <td className="p-4 text-purple-600 font-bold">
+                              {item.vendedor}
                             </td>
-                            <td className="p-3 text-center text-gray-400">
-                              {vendedor.vendas}
+                            <td className="p-4 text-center">
+                              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold">
+                                {item.qtd}
+                              </span>
                             </td>
-                            <td className="p-3 text-center font-bold text-purple-600 bg-purple-50/50 text-lg">
-                              {vendedor.convites}
-                            </td>
-                            <td className="p-3 text-right text-gray-400">
-                              {formatMoney(vendedor.faturamento)}
+                            <td className="p-4 text-right">
+                              <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600 uppercase">
+                                AGRUPADO
+                              </span>
                             </td>
                           </tr>
                         ))}
-                        {rankingConvites.length === 0 && (
-                          <tr>
-                            <td
-                              colSpan={5}
-                              className="p-6 text-center text-gray-400"
-                            >
-                              Nenhum convite registrado neste período.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
 
-                {/* GRÁFICO (Mantido para contexto financeiro, ou pode ser removido se desejar limpar a tela) */}
-                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                  <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                    <TrendingUp size={18} className="text-gray-500" />
-                    Performance Financeira
-                  </h3>
-                  <div className="space-y-4">
-                    {metricas.grafico?.map((dia: any, idx: number) => (
-                      <div
-                        key={idx}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <span className="text-gray-500 w-10">
-                          {dia.data_formatada}
-                        </span>
-                        <div className="flex-1 mx-3 h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-blue-500 rounded-full"
-                            style={{
-                              width: `${Math.min(
-                                (dia.valor /
-                                  (metricas.vendas?.total_valor || 1)) *
-                                  100 *
-                                  5,
-                                100
-                              )}%`,
-                            }}
-                          ></div>
-                        </div>
-                        <span className="font-bold text-gray-700 text-xs">
-                          {formatMoney(dia.valor)}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                      {modoVisualizacao === "completo" &&
+                        metricas.listaDetalhadaConvites?.map(
+                          (convite: any, idx: number) => (
+                            <tr key={idx} className="hover:bg-gray-50">
+                              <td className="p-4 text-gray-500">
+                                {new Date(convite.dataCriacao).toLocaleString(
+                                  "pt-BR"
+                                )}
+                              </td>
+                              <td className="p-4 text-purple-600 font-medium">
+                                {convite.vendedor}
+                              </td>
+                              <td className="p-4 text-right">
+                                <span className="px-2 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 uppercase">
+                                  ENTREGUE
+                                </span>
+                              </td>
+                            </tr>
+                          )
+                        )}
+
+                      {/* MENSAGEM DE VAZIO */}
+                      {((modoVisualizacao === "resumido" &&
+                        convitesAgrupados.length === 0) ||
+                        (modoVisualizacao === "completo" &&
+                          (!metricas.listaDetalhadaConvites ||
+                            metricas.listaDetalhadaConvites.length === 0))) && (
+                        <tr>
+                          <td
+                            colSpan={4}
+                            className="p-8 text-center text-gray-400"
+                          >
+                            Nenhum convite encontrado.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>

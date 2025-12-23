@@ -62,7 +62,7 @@ export default function AnalyticsPage() {
     // 1. Título
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.text("Portal de Vendas", 14, cursorY);
+    doc.text("Portal de Vendas - PRAIASTUR", 14, cursorY);
     cursorY += 8; // Desce 8 pontos
 
     // 2. Data de Geração

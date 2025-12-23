@@ -112,6 +112,20 @@ export function StepPagamento({
     }).format(val);
   };
 
+  const handleChangeValorLimitado = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const valorDigitado = parseFloat(e.target.value);
+
+    // Se o campo estiver vazio (permite apagar) OU for menor/igual a 10.000
+    if (e.target.value === "" || valorDigitado <= 10000) {
+      handleChange(e);
+    } else {
+      // Opcional: Se quiser dar um feedback visual ou alerta, pode colocar aqui.
+      // Por enquanto, ele só ignora a digitação que ultrapassa o limite.
+    }
+  };
+
   const handleSelecionarOpcao = (parcelas: number, valorParcela: number) => {
     if (!setFormData) return;
     const totalCalculado = parcelas * valorParcela;
@@ -224,11 +238,11 @@ export function StepPagamento({
             name="valorTotalPlano"
             type="number"
             value={formData.valorTotalPlano || ""}
-            readOnly
-            // onChange={handleChange}
+            onChange={handleChangeValorLimitado}
+            max={10000}
             required
-            placeholder="Selecione na tabela ou digite"
-            className="bg-gray-100 cursor-not-allowed text-gray-500 opacity-60"
+            placeholder="Selecione na tabela "
+            className="bg-white text-gray-900"
           />
         </div>
 

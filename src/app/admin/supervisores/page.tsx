@@ -143,7 +143,7 @@ export default function AdminSupervisoresPage() {
     }
   }
 
-  // ✅ NOVO: INATIVAR (DESATIVAR) SUPERVISOR
+  // INATIVAR (SOFT DELETE)
   async function handleInativarSupervisor(sup: Supervisor) {
     const confirmacao = window.confirm(
       `Tem certeza que deseja inativar o supervisor ${sup.nome}?`
@@ -151,7 +151,6 @@ export default function AdminSupervisoresPage() {
     if (!confirmacao) return;
 
     try {
-      // padrão igual ao vendedor (soft delete no backend)
       await api.delete(`/api/admin/supervisores/${sup.id}`);
       alert("Supervisor inativado com sucesso!");
       carregarSupervisores();
@@ -312,7 +311,7 @@ export default function AdminSupervisoresPage() {
         {/* COLUNA 2: LISTA */}
         <div className="lg:col-span-2">
           <h2 className="text-lg font-bold text-gray-800 mb-4">
-            Supervisores Ativos
+            Supervisores
           </h2>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -339,7 +338,11 @@ export default function AdminSupervisoresPage() {
                   {listaSupervisores.map((sup) => (
                     <tr
                       key={sup.id}
-                      className="hover:bg-gray-50 transition-colors group"
+                      className={`transition-colors group border-b border-gray-100 ${
+                        !sup.ativo
+                          ? "bg-gray-100 text-gray-500"
+                          : "hover:bg-orange-50/30"
+                      }`}
                     >
                       <td className="p-4">
                         <div className="font-medium text-gray-900">
@@ -349,6 +352,7 @@ export default function AdminSupervisoresPage() {
                           {sup.email}
                         </div>
                       </td>
+
                       <td className="p-4 hidden sm:table-cell">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <Mail className="h-4 w-4 text-gray-400" /> {sup.email}
@@ -357,7 +361,16 @@ export default function AdminSupervisoresPage() {
                           <Phone className="h-4 w-4 text-gray-400" />{" "}
                           {sup.telefone}
                         </div>
+
+                        <div>
+                          {!sup.ativo && (
+                            <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded border border-red-200 uppercase font-bold">
+                              Inativo
+                            </span>
+                          )}
+                        </div>
                       </td>
+
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {/* BOTÃO RESETAR SENHA */}
@@ -369,11 +382,11 @@ export default function AdminSupervisoresPage() {
                             <Lock className="h-4 w-4" />
                           </button>
 
-                          {/* ✅ BOTÃO INATIVAR SUPERVISOR */}
+                          {/* BOTÃO INATIVAR SUPERVISOR (igual vendedor: só aparece no hover) */}
                           <button
                             onClick={() => handleInativarSupervisor(sup)}
                             title="Inativar Supervisor"
-                            className="text-gray-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-all"
+                            className="text-gray-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>

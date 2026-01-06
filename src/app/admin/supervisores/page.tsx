@@ -5,15 +5,14 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import api from "../../../service/api"; // Ajuste o caminho se necessário
 import {
-  LogOut,
   Plus,
   Loader2,
   Phone,
   Mail,
   Trash2,
   Building2,
-  Lock, // Novo ícone
-  X, // Novo ícone para fechar modal
+  Lock,
+  X,
 } from "lucide-react";
 
 interface Supervisor {
@@ -128,9 +127,8 @@ export default function AdminSupervisoresPage() {
 
     setLoadingReset(true);
     try {
-      // Chama a rota que configuramos
       await api.post("/api/admin/resetar-senha", {
-        tipo: "SUPERVISOR", // IMPORTANTE: Tipo correto para o backend
+        tipo: "SUPERVISOR",
         id: idParaReset,
         novaSenha: novaSenhaReset,
       });
@@ -142,6 +140,24 @@ export default function AdminSupervisoresPage() {
       alert(error.response?.data?.error || "Erro ao resetar senha.");
     } finally {
       setLoadingReset(false);
+    }
+  }
+
+  // ✅ NOVO: INATIVAR (DESATIVAR) SUPERVISOR
+  async function handleInativarSupervisor(sup: Supervisor) {
+    const confirmacao = window.confirm(
+      `Tem certeza que deseja inativar o supervisor ${sup.nome}?`
+    );
+    if (!confirmacao) return;
+
+    try {
+      // padrão igual ao vendedor (soft delete no backend)
+      await api.delete(`/api/admin/supervisores/${sup.id}`);
+      alert("Supervisor inativado com sucesso!");
+      carregarSupervisores();
+    } catch (error: any) {
+      console.error("Erro ao inativar supervisor", error);
+      alert(error.response?.data?.error || "Erro ao inativar supervisor.");
     }
   }
 
@@ -353,9 +369,10 @@ export default function AdminSupervisoresPage() {
                             <Lock className="h-4 w-4" />
                           </button>
 
-                          {/* BOTÃO EXCLUIR */}
+                          {/* ✅ BOTÃO INATIVAR SUPERVISOR */}
                           <button
-                            title="Excluir"
+                            onClick={() => handleInativarSupervisor(sup)}
+                            title="Inativar Supervisor"
                             className="text-gray-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-lg transition-all"
                           >
                             <Trash2 className="h-4 w-4" />

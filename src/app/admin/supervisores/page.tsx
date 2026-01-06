@@ -20,7 +20,24 @@ interface Supervisor {
   nome: string;
   email: string;
   telefone: string;
-  ativo: boolean;
+  ativo: boolean; // vamos garantir boolean na normalização
+}
+
+function toBoolAtivo(v: any): boolean {
+  // já é boolean
+  if (v === true) return true;
+  if (v === false) return false;
+
+  // number
+  if (typeof v === "number") return v === 1;
+
+  // string (pg às vezes pode retornar "t"/"f" em certas configs)
+  const s = String(v ?? "").trim().toLowerCase();
+  if (s === "true" || s === "t" || s === "1") return true;
+  if (s === "false" || s === "f" || s === "0" || s === "") return false;
+
+  // fallback: truthy
+  return Boolean(v);
 }
 
 export default function AdminSupervisoresPage() {
@@ -65,7 +82,16 @@ export default function AdminSupervisoresPage() {
   async function carregarSupervisores() {
     try {
       const response = await api.get("/api/admin/supervisores");
-      setListaSupervisores(response.data);
+
+      const normalizado: Supervisor[] = (response.data || []).map((s: any) => ({
+        id: Number(s.id),
+        nome: String(s.nome ?? ""),
+        email: String(s.email ?? ""),
+        telefone: String(s.telefone ?? ""),
+        ativo: toBoolAtivo(s.ativo),
+      }));
+
+      setListaSupervisores(normalizado);
     } catch (error) {
       console.error("Erro ao listar supervisores", error);
     }
@@ -310,9 +336,7 @@ export default function AdminSupervisoresPage() {
 
         {/* COLUNA 2: LISTA */}
         <div className="lg:col-span-2">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">
-            Supervisores
-          </h2>
+          <h2 className="text-lg font-bold text-gray-800 mb-4">Supervisores</h2>
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
             {listaSupervisores.length === 0 ? (
@@ -334,6 +358,7 @@ export default function AdminSupervisoresPage() {
                     </th>
                   </tr>
                 </thead>
+
                 <tbody className="divide-y divide-gray-100">
                   {listaSupervisores.map((sup) => (
                     <tr
@@ -348,9 +373,19 @@ export default function AdminSupervisoresPage() {
                         <div className="font-medium text-gray-900">
                           {sup.nome}
                         </div>
+
                         <div className="text-sm text-gray-500 sm:hidden">
                           {sup.email}
                         </div>
+
+                        {/* Badge no mobile também (igual ideia do vendedor, mas adaptado) */}
+                        {!sup.ativo && (
+                          <div className="sm:hidden mt-2">
+                            <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded border border-red-200 uppercase font-bold">
+                              Inativo
+                            </span>
+                          </div>
+                        )}
                       </td>
 
                       <td className="p-4 hidden sm:table-cell">
@@ -362,18 +397,17 @@ export default function AdminSupervisoresPage() {
                           {sup.telefone}
                         </div>
 
-                        <div>
-                          {!sup.ativo && (
-                            <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded border border-red-200 uppercase font-bold">
+                        {!sup.ativo && (
+                          <div className="mt-2">
+                            <span className="text-[10px] bg-red-100 text-red-600 px-2 py-0.5 rounded border border-red-200 uppercase font-bold">
                               Inativo
                             </span>
-                          )}
-                        </div>
+                          </div>
+                        )}
                       </td>
 
                       <td className="p-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {/* BOTÃO RESETAR SENHA */}
                           <button
                             onClick={() => abrirModalReset(sup)}
                             title="Resetar Senha"
@@ -382,7 +416,6 @@ export default function AdminSupervisoresPage() {
                             <Lock className="h-4 w-4" />
                           </button>
 
-                          {/* BOTÃO INATIVAR SUPERVISOR (igual vendedor: só aparece no hover) */}
                           <button
                             onClick={() => handleInativarSupervisor(sup)}
                             title="Inativar Supervisor"
@@ -405,7 +438,6 @@ export default function AdminSupervisoresPage() {
       {modalResetOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            {/* Header do Modal */}
             <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
               <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
                 <Lock className="h-5 w-5 text-orange-500" />
@@ -419,7 +451,6 @@ export default function AdminSupervisoresPage() {
               </button>
             </div>
 
-            {/* Corpo do Modal */}
             <div className="p-6">
               <p className="text-sm text-gray-600 mb-4">
                 Você está alterando a senha do supervisor: <br />
@@ -438,7 +469,6 @@ export default function AdminSupervisoresPage() {
               />
             </div>
 
-            {/* Footer do Modal */}
             <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-100">
               <button
                 onClick={fecharModalReset}

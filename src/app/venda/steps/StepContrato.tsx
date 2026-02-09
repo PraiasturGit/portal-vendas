@@ -1,54 +1,41 @@
+// app/(dashboard)/vendas/nova/steps/StepContrato.tsx  (ajuste o caminho se necessário)
+// ✅ Arquivo COMPLETO pronto pra copiar e colar
 import { useEffect, useState } from "react";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { StepProps } from "../types";
-import api from "@/service/api";
 import { ModalDecisaoVenda } from "@/components/ModalDecisaoVenda";
 
-export function StepContrato({
-  formData,
-  handleChange,
-  setFormData,
-}: StepProps) {
-  const [loadingNumero, setLoadingNumero] = useState(false);
+export function StepContrato({ formData, handleChange, setFormData }: StepProps) {
   const [showModal, setShowModal] = useState(false);
 
-  // --- LÓGICA DO MODAL (Manteve igual) ---
   useEffect(() => {
+    // se ainda não escolheu o modo, abre modal
     if (!formData.tipoEnvioContrato) {
       setShowModal(true);
-    } else if (
-      formData.tipoEnvioContrato === "Digital" &&
-      !formData.numeroContrato
-    ) {
-      buscarProximoNumero();
     }
+    // ✅ NÃO buscar "proximo numero" aqui.
+    // O número oficial agora é gerado SOMENTE no backend ao finalizar.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const buscarProximoNumero = async () => {
-    if (!setFormData) return;
-    setLoadingNumero(true);
-    try {
-      const { data } = await api.get("/api/vendas/proximo-numero");
-      setFormData((prev) => ({ ...prev, numeroContrato: data.numero }));
-    } catch (error) {
-      console.error("Erro ao buscar número", error);
-    } finally {
-      setLoadingNumero(false);
-    }
-  };
-
   const handleDecisaoModal = (gerarDigital: boolean) => {
-    if (setFormData) {
-      const tipoEnvio = gerarDigital ? "Digital" : "Manual";
-      setFormData((prev) => ({
-        ...prev,
-        tipoEnvioContrato: tipoEnvio,
-        numeroContrato: gerarDigital ? prev.numeroContrato : "",
-        tipoVenda: gerarDigital ? "Online" : prev.tipoVenda,
-      }));
-      if (gerarDigital) buscarProximoNumero();
-    }
+    if (!setFormData) return;
+
+    const tipoEnvio = gerarDigital ? "Digital" : "Manual";
+
+    setFormData((prev) => ({
+      ...prev,
+      tipoEnvioContrato: tipoEnvio,
+
+      // ✅ Digital: deixa vazio e bloqueia edição (backend gera ao finalizar)
+      // ✅ Manual: permite digitar
+      numeroContrato: gerarDigital ? "" : prev.numeroContrato || "",
+
+      // ✅ Se for digital, força Online (igual você já fazia)
+      tipoVenda: gerarDigital ? "Online" : prev.tipoVenda,
+    }));
+
     setShowModal(false);
   };
 
@@ -58,21 +45,19 @@ export function StepContrato({
     <>
       <ModalDecisaoVenda
         isOpen={showModal}
-        loading={loadingNumero}
+        loading={false} // ✅ não tem mais loading de número
         onClose={() => {}}
         onConfirm={handleDecisaoModal}
       />
 
       <Card>
-        <CardHeader
-          title="Dados Iniciais"
-          subtitle="Identificação do documento"
-        />
+        <CardHeader title="Dados Iniciais" subtitle="Identificação do documento" />
 
         <div className="px-6 pb-2 flex justify-end">
           <button
             onClick={() => setShowModal(true)}
             className="text-xs text-blue-600 hover:underline cursor-pointer"
+            type="button"
           >
             Alterar modo ({isDigital ? "Gerar Automático" : "Digitar Manual"})
           </button>
@@ -84,19 +69,15 @@ export function StepContrato({
             name="numeroContrato"
             value={formData.numeroContrato || ""}
             onChange={handleChange}
-            required
+            required={!isDigital} // ✅ Digital não precisa preencher no front
             readOnly={isDigital}
-            disabled={loadingNumero}
-            className={
-              isDigital ? "bg-gray-100 cursor-not-allowed" : "bg-white"
-            }
-            placeholder={loadingNumero ? "Gerando..." : "Digite o número"}
+            disabled={isDigital}
+            className={isDigital ? "bg-gray-100 cursor-not-allowed" : "bg-white"}
+            placeholder={isDigital ? "Será gerado automaticamente na finalização" : "Digite o número"}
           />
 
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">
-              Modalidade da Venda
-            </label>
+            <label className="text-sm font-medium text-gray-700">Modalidade da Venda</label>
             <select
               name="tipoVenda"
               value={formData.tipoVenda || ""}
@@ -115,6 +96,16 @@ export function StepContrato({
             </select>
           </div>
         </div>
+
+        {/* ✅ Informação clara pro usuário */}
+        {isDigital && (
+          <div className="px-6 pb-4 pt-2">
+            <p className="text-xs text-gray-500">
+              No modo <b>Digital</b>, o número do contrato é definido automaticamente pelo sistema no momento em que você
+              clicar em <b>Finalizar Venda</b>.
+            </p>
+          </div>
+        )}
       </Card>
     </>
   );

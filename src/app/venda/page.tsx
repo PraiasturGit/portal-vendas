@@ -1,14 +1,14 @@
+// app/vendas/page.tsx  
+// ✅ Arquivo COMPLETO pronto pra copiar e colar
 "use client";
 import Cookies from "js-cookie";
 
-import { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/service/api";
 import { ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { toast } from "sonner";
-// Importando o Modal
-import { ModalDecisaoVenda } from "@/components/ModalDecisaoVenda";
 
 import { StepContrato } from "./steps/StepContrato";
 import { StepTitular } from "./steps/StepTitular";
@@ -29,16 +29,29 @@ const STEPS_LABELS = [
   "Revisão",
 ];
 
+function makeRequestId() {
+  try {
+    // browsers modernos
+    // @ts-ignore
+    if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  } catch {}
+  // fallback simples
+  return `req_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
 export default function VendaPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false); // Controle do Modal
+
+  // ✅ trava forte contra duplo clique / duplo envio (mesmo que estado demore a atualizar)
+  const sendingRef = useRef(false);
+  const requestIdRef = useRef<string>(makeRequestId()); // mesmo id durante esta tentativa
 
   const [formData, setFormData] = useState<VendaFormData>({
     tipoVenda: "Presencial",
     tipoContratoNome: "Ouro",
-    numeroContrato: "",
+    numeroContrato: "", // ✅ deixa vazio: o BACKEND define o número oficial ao finalizar
     valorTotalPlano: "",
     nomeTitular: "",
     cpfTitular: "",
@@ -93,9 +106,7 @@ export default function VendaPage() {
   });
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -103,8 +114,7 @@ export default function VendaPage() {
 
   const handleNext = () => {
     if (currentStep === 1) {
-      const { telefoneTitular, emailTitular, nomeTitular, cpfTitular } =
-        formData;
+      const { telefoneTitular, emailTitular, nomeTitular, cpfTitular } = formData;
 
       if (!telefoneTitular || !emailTitular || !nomeTitular || !cpfTitular) {
         alert(
@@ -119,8 +129,11 @@ export default function VendaPage() {
 
   const handlePrev = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
 
-  // --- NOVA FUNÇÃO DE ENVIO ---
+  // --- FUNÇÃO DE ENVIO (com trava total) ---
   const processarEnvio = async (gerarContrato: boolean) => {
+    // ✅ trava imediatamente (antes do setLoading)
+    if (sendingRef.current) return;
+    sendingRef.current = true;
     setLoading(true);
 
     try {
@@ -132,28 +145,30 @@ export default function VendaPage() {
         return;
       }
 
-      // Prepara o payload com a decisão do contrato
-      const payload = {
+      // ✅ payload final: NÃO manda número oficial; o backend decide
+      const payload: any = {
         ...formData,
-        gerarContrato: gerarContrato,
+        numeroContrato: "", // força vazio pra evitar "preview" duplicado
+        gerarContrato,
+        requestId: requestIdRef.current, // ✅ id da tentativa (anti-duplo envio)
       };
 
       const { data } = await api.post("/api/vendas/criar-analise", payload, {
         headers: {
           Authorization: `Bearer ${token}`,
+          // ✅ se você quiser usar depois no back, já está pronto
+          "Idempotency-Key": requestIdRef.current,
         },
       });
 
       // Feedback baseado na escolha
       if (gerarContrato) {
         if (data.clickSignSucesso === false) {
-          // CAIU AQUI: Venda salva, mas contrato deu erro
           toast.warning("Venda salva, mas o contrato falhou!", {
             description: `Motivo: ${data.clickSignErro || "Erro na Clicksign"}`,
-            duration: 6000, // Fica mais tempo na tela
+            duration: 6000,
           });
         } else {
-          // Sucesso total
           toast.success("Venda salva!", {
             description: "O contrato foi enviado para o WhatsApp do cliente.",
             duration: 4000,
@@ -166,7 +181,11 @@ export default function VendaPage() {
         });
       }
 
-      // Redireciona
+      // ✅ opcional: se quiser mostrar número do contrato retornado
+      // if (data.numeroContrato) {
+      //   toast.message("Número do contrato", { description: String(data.numeroContrato) });
+      // }
+
       router.push("/dashboard");
     } catch (error: any) {
       console.error(error);
@@ -175,10 +194,15 @@ export default function VendaPage() {
       toast.error("Erro ao finalizar", {
         description: msg,
       });
+
+      // ✅ libera para tentar novamente se deu erro
+      requestIdRef.current = makeRequestId();
     } finally {
       setLoading(false);
+      sendingRef.current = false;
     }
   };
+
   const renderStep = () => {
     const props = { formData, handleChange, setFormData };
     switch (currentStep) {
@@ -201,6 +225,8 @@ export default function VendaPage() {
     }
   };
 
+  const isLastStep = currentStep === STEPS_LABELS.length - 1;
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20 relative">
       {/* Header Fixo */}
@@ -218,7 +244,7 @@ export default function VendaPage() {
             style={{
               width: `${((currentStep + 1) / STEPS_LABELS.length) * 100}%`,
             }}
-          ></div>
+          />
         </div>
       </div>
 
@@ -227,7 +253,7 @@ export default function VendaPage() {
       {/* Footer de Navegação FIXO */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
-          {/* Botão Voltar (Escondido no primeiro passo) */}
+          {/* Botão Voltar */}
           <div className="w-32">
             {currentStep > 0 && (
               <Button
@@ -243,19 +269,19 @@ export default function VendaPage() {
 
           {/* Botão Próximo ou Finalizar */}
           <div className="w-auto md:w-auto">
-            {currentStep === STEPS_LABELS.length - 1 ? (
+            {isLastStep ? (
               <Button
                 onClick={() => {
+                  // se você tem esse campo nos steps:
+                  // @ts-ignore
                   const deveGerar = formData.tipoEnvioContrato === "Digital";
-                  processarEnvio(deveGerar);
+                  processarEnvio(Boolean(deveGerar));
                 }}
                 disabled={loading}
                 className="bg-green-600 hover:bg-green-700 w-full md:w-48"
               >
                 {loading ? (
-                  <span className="flex items-center gap-2">
-                    Processando...
-                  </span>
+                  <span className="flex items-center gap-2">Processando...</span>
                 ) : (
                   <span className="flex items-center gap-2">
                     Finalizar Venda <CheckCircle size={18} />
@@ -263,7 +289,7 @@ export default function VendaPage() {
                 )}
               </Button>
             ) : (
-              <Button onClick={handleNext} className="w-32">
+              <Button onClick={handleNext} className="w-32" disabled={loading}>
                 Próximo <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             )}

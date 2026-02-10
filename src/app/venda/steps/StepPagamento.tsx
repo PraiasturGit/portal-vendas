@@ -130,7 +130,7 @@ const TABELA_OURO_4 = [
 
 // Entrada “padrão” de cada subplano Ouro (pra facilitar na operação)
 const ENTRADA_PADRAO_OURO: Record<string, number> = {
-  "Ouro 1": 0, // não veio no PDF, então deixei 0 aqui
+  "Ouro 1": 880, // não veio no PDF, então deixei 0 aqui
   "Ouro 2": 680, // :contentReference[oaicite:7]{index=7}
   "Ouro 3": 480, // :contentReference[oaicite:8]{index=8}
   "Ouro 4": 280, // :contentReference[oaicite:9]{index=9}

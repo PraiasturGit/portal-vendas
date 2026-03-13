@@ -4,20 +4,15 @@ import { Input } from "@/components/ui/Input";
 import { StepProps } from "../types";
 
 /* =========================================================================
-   ✅ PLANOS OURO (4 VARIAÇÕES)
-   IMPORTANTE:
-   - "Valor Total do Plano" NÃO é parcelas * valor da parcela.
-   - Por isso cada linha guarda: parcelas, valorParcela e totalPlano.
-   - Fonte:
-     Ouro 2: :contentReference[oaicite:1]{index=1}
-     Ouro 3: :contentReference[oaicite:2]{index=2}
-     Ouro 4: :contentReference[oaicite:3]{index=3}
-   - Ouro 1: você colou na conversa (não veio em PDF aqui); mantive a sua tabela antiga
-     e ajustei os totals com base no que você escreveu acima.
+   BASE DE PROGRESSÃO
 ======================================================================== */
 
-// OURO 1 (baseado no texto que você colou)
-const TABELA_OURO_1 = [
+const ENTRADA_PADRAO_OURO = 880;
+
+/* =========================================================================
+   TABELA OURO
+======================================================================== */
+const TABELA_OURO = [
   { p: 1, parcela: 4200.0, totalPlano: 5080.0 },
   { p: 2, parcela: 2160.0, totalPlano: 5200.0 },
   { p: 3, parcela: 1475.0, totalPlano: 5305.0 },
@@ -44,111 +39,25 @@ const TABELA_OURO_1 = [
   { p: 24, parcela: 215.0, totalPlano: 6040.0 },
 ];
 
-// OURO 2 (Entrada 680; Comissão 43%) :contentReference[oaicite:4]{index=4}
-const TABELA_OURO_2 = [
-  { p: 1, parcela: 4400.0, totalPlano: 5080.0 },
-  { p: 2, parcela: 2260.0, totalPlano: 5200.0 },
-  { p: 3, parcela: 1542.0, totalPlano: 5306.0 },
-  { p: 4, parcela: 1170.0, totalPlano: 5360.0 },
-  { p: 5, parcela: 948.0, totalPlano: 5420.0 },
-  { p: 6, parcela: 793.0, totalPlano: 5438.0 },
-  { p: 7, parcela: 684.0, totalPlano: 5468.0 },
-  { p: 8, parcela: 600.0, totalPlano: 5480.0 },
-  { p: 9, parcela: 537.0, totalPlano: 5513.0 },
-  { p: 10, parcela: 485.0, totalPlano: 5530.0 },
-  { p: 11, parcela: 443.0, totalPlano: 5553.0 },
-  { p: 12, parcela: 409.0, totalPlano: 5588.0 },
-  { p: 13, parcela: 380.0, totalPlano: 5620.0 },
-  { p: 14, parcela: 354.0, totalPlano: 5636.0 },
-  { p: 15, parcela: 331.0, totalPlano: 5645.0 },
-  { p: 16, parcela: 313.0, totalPlano: 5688.0 },
-  { p: 17, parcela: 297.0, totalPlano: 5729.0 },
-  { p: 18, parcela: 281.0, totalPlano: 5738.0 },
-  { p: 19, parcela: 271.0, totalPlano: 5829.0 },
-  { p: 20, parcela: 260.0, totalPlano: 5880.0 },
-  { p: 21, parcela: 250.0, totalPlano: 5930.0 },
-  { p: 22, parcela: 239.0, totalPlano: 5938.0 },
-  { p: 23, parcela: 231.0, totalPlano: 5993.0 },
-  { p: 24, parcela: 223.0, totalPlano: 6032.0 },
-];
-
-// OURO 3 (Entrada 480; Comissão 45%) :contentReference[oaicite:5]{index=5}
-const TABELA_OURO_3 = [
-  { p: 1, parcela: 4600.0, totalPlano: 5080.0 },
-  { p: 2, parcela: 2360.0, totalPlano: 5200.0 },
-  { p: 3, parcela: 1608.0, totalPlano: 5304.0 },
-  { p: 4, parcela: 1220.0, totalPlano: 5360.0 },
-  { p: 5, parcela: 988.0, totalPlano: 5420.0 },
-  { p: 6, parcela: 827.0, totalPlano: 5442.0 },
-  { p: 7, parcela: 712.0, totalPlano: 5464.0 },
-  { p: 8, parcela: 625.0, totalPlano: 5480.0 },
-  { p: 9, parcela: 559.0, totalPlano: 5511.0 },
-  { p: 10, parcela: 505.0, totalPlano: 5530.0 },
-  { p: 11, parcela: 461.0, totalPlano: 5551.0 },
-  { p: 12, parcela: 425.0, totalPlano: 5580.0 },
-  { p: 13, parcela: 396.0, totalPlano: 5628.0 },
-  { p: 14, parcela: 369.0, totalPlano: 5646.0 },
-  { p: 15, parcela: 345.0, totalPlano: 5655.0 },
-  { p: 16, parcela: 325.0, totalPlano: 5680.0 },
-  { p: 17, parcela: 309.0, totalPlano: 5733.0 },
-  { p: 18, parcela: 292.0, totalPlano: 5736.0 },
-  { p: 19, parcela: 281.0, totalPlano: 5819.0 },
-  { p: 20, parcela: 270.0, totalPlano: 5880.0 },
-  { p: 21, parcela: 259.0, totalPlano: 5919.0 },
-  { p: 22, parcela: 248.0, totalPlano: 5936.0 },
-  { p: 23, parcela: 239.0, totalPlano: 5977.0 },
-  { p: 24, parcela: 232.0, totalPlano: 6048.0 },
-];
-
-// OURO 4 (Entrada 280; Comissão 47%) :contentReference[oaicite:6]{index=6}
-const TABELA_OURO_4 = [
-  { p: 1, parcela: 4800.0, totalPlano: 5080.0 },
-  { p: 2, parcela: 2460.0, totalPlano: 5200.0 },
-  { p: 3, parcela: 1675.0, totalPlano: 5305.0 },
-  { p: 4, parcela: 1270.0, totalPlano: 5360.0 },
-  { p: 5, parcela: 1028.0, totalPlano: 5420.0 },
-  { p: 6, parcela: 860.0, totalPlano: 5440.0 },
-  { p: 7, parcela: 741.0, totalPlano: 5467.0 },
-  { p: 8, parcela: 650.0, totalPlano: 5480.0 },
-  { p: 9, parcela: 582.0, totalPlano: 5518.0 },
-  { p: 10, parcela: 525.0, totalPlano: 5530.0 },
-  { p: 11, parcela: 480.0, totalPlano: 5560.0 },
-  { p: 12, parcela: 442.0, totalPlano: 5584.0 },
-  { p: 13, parcela: 411.0, totalPlano: 5623.0 },
-  { p: 14, parcela: 383.0, totalPlano: 5642.0 },
-  { p: 15, parcela: 358.0, totalPlano: 5650.0 },
-  { p: 16, parcela: 338.0, totalPlano: 5688.0 },
-  { p: 17, parcela: 320.0, totalPlano: 5720.0 },
-  { p: 18, parcela: 303.0, totalPlano: 5734.0 },
-  { p: 19, parcela: 292.0, totalPlano: 5828.0 },
-  { p: 20, parcela: 280.0, totalPlano: 5880.0 },
-  { p: 21, parcela: 269.0, totalPlano: 5929.0 },
-  { p: 22, parcela: 257.0, totalPlano: 5934.0 },
-  { p: 23, parcela: 248.0, totalPlano: 5984.0 },
-  { p: 24, parcela: 240.0, totalPlano: 6040.0 },
-];
-
-// Entrada “padrão” de cada subplano Ouro (pra facilitar na operação)
-const ENTRADA_PADRAO_OURO: Record<string, number> = {
-  "Ouro 1": 880, // não veio no PDF, então deixei 0 aqui
-  "Ouro 2": 680, // :contentReference[oaicite:7]{index=7}
-  "Ouro 3": 480, // :contentReference[oaicite:8]{index=8}
-  "Ouro 4": 280, // :contentReference[oaicite:9]{index=9}
-};
-
-type LinhaOuro = { p: number; parcela: number; totalPlano: number };
-
-function getTabelaOuro(subPlano: string): LinhaOuro[] {
-  if (subPlano === "Ouro 2") return TABELA_OURO_2;
-  if (subPlano === "Ouro 3") return TABELA_OURO_3;
-  if (subPlano === "Ouro 4") return TABELA_OURO_4;
-  return TABELA_OURO_1;
-}
+/* =========================================================================
+   DIAMANTE
+======================================================================== */
+const ENTRADA_PADRAO_DIAMANTE = 1100;
+const FATURADO_BASE_DIAMANTE = 5680;
+const TOTAL_BASE_DIAMANTE = 6780;
 
 /* =========================================================================
-   PRATA (mantive como você tinha; depois você me manda as 4 variações do prata
-   se existir que eu ajusto igual)
+   BRONZE
 ======================================================================== */
+const ENTRADA_PADRAO_BRONZE = 498;
+const FATURADO_BASE_BRONZE = 2500;
+const TOTAL_BASE_BRONZE = 2998;
+
+/* =========================================================================
+   PRATA
+======================================================================== */
+const ENTRADA_PADRAO_PRATA = 680;
+
 const TABELA_PRATA_2025 = [
   { p: 1, v: 3400.0 },
   { p: 2, v: 1710.0 },
@@ -176,7 +85,54 @@ const TABELA_PRATA_2025 = [
   { p: 24, v: 200.0 },
 ];
 
-// --- LISTA 1: OPÇÕES PARA ENTRADA (Conforme vendaService.js - FORMA_PAGAMENTO_ENTRADA_MAP) ---
+type TabelaItem = {
+  p: number;
+  parcela: number;
+  totalPlano: number;
+};
+
+function gerarTabelaPelaProgressaoDoOuro(
+  totalBasePlano: number,
+  entradaPadraoPlano: number
+): TabelaItem[] {
+  const totalBaseOuro = TABELA_OURO[0].totalPlano;
+
+  return TABELA_OURO.map((item) => {
+    const fatorPercentual = item.totalPlano / totalBaseOuro;
+    const totalPlano = Number((totalBasePlano * fatorPercentual).toFixed(2));
+    const parcela = Number(
+      ((totalPlano - entradaPadraoPlano) / item.p).toFixed(2)
+    );
+
+    return {
+      p: item.p,
+      parcela,
+      totalPlano,
+    };
+  });
+}
+
+const TABELA_DIAMANTE = gerarTabelaPelaProgressaoDoOuro(
+  TOTAL_BASE_DIAMANTE,
+  ENTRADA_PADRAO_DIAMANTE
+);
+
+const TABELA_BRONZE = gerarTabelaPelaProgressaoDoOuro(
+  TOTAL_BASE_BRONZE,
+  ENTRADA_PADRAO_BRONZE
+);
+
+const TABELA_PRATA = TABELA_PRATA_2025.map((item) => ({
+  p: item.p,
+  parcela: item.v,
+  totalPlano: Number((item.p * item.v).toFixed(2)),
+}));
+
+const TOTAL_BASE_PRATA = TABELA_PRATA[0]?.totalPlano || 3400;
+
+/* =========================================================================
+   OPÇÕES
+======================================================================== */
 const OPCOES_ENTRADA = [
   { label: "Pix", value: "Pix" },
   { label: "Dinheiro", value: "Dinheiro" },
@@ -184,74 +140,258 @@ const OPCOES_ENTRADA = [
   { label: "Cartão de Débito", value: "Cartão de Débito" },
   { label: "Boleto", value: "Boleto" },
   { label: "Cheque", value: "Cheque" },
-  { label: "Cartão de Crédito + Dinheiro", value: "Cartão de Crédito + Dinheiro" },
-  { label: "Cartão de Crédito + Cartão de Débito", value: "Cartão de Débito + Crédito" },
+  {
+    label: "Cartão de Crédito + Dinheiro",
+    value: "Cartão de Crédito + Dinheiro",
+  },
+  {
+    label: "Cartão de Crédito + Cartão de Débito",
+    value: "Cartão de Débito + Crédito",
+  },
   { label: "Cartão de Débito + Pix", value: "Cartão de Débito + Pix" },
   { label: "Cartão de Crédito + Pix", value: "Cartão de Crédito + Pix" },
   { label: "Pix + Dinheiro", value: "Pix + Dinheiro" },
 ];
 
-// --- LISTA 2: OPÇÕES PARA PLANO (Conforme vendaService.js - FORMA_PAGAMENTO_MAP) ---
 const OPCOES_PLANO = [
   { label: "Pix", value: "PIX" },
   { label: "Cartão de Crédito", value: "Cartão de Crédito" },
   { label: "Boleto", value: "Boleto" },
   { label: "Cartão de Débito", value: "Cartão de Débito" },
   { label: "Cheque", value: "Cheque" },
-  { label: "Cartão de Crédito + Dinheiro", value: "Cartão de Crédito + Dinheiro" },
-  { label: "Cartão de Crédito + Cartão de Débito", value: "Cartão de Crédito + Cartão de Débito" },
+  {
+    label: "Cartão de Crédito + Dinheiro",
+    value: "Cartão de Crédito + Dinheiro",
+  },
+  {
+    label: "Cartão de Crédito + Cartão de Débito",
+    value: "Cartão de Crédito + Cartão de Débito",
+  },
   { label: "Cartão de Débito + Pix", value: "Cartão de Débito + Pix" },
   { label: "Boleto + Cartão de Crédito", value: "Boleto + Cartão de Crédito" },
   { label: "Pix + Dinheiro", value: "Pix + Dinheiro" },
 ];
 
-export function StepPagamento({ formData, handleChange, setFormData }: StepProps) {
+function parseMoneyLike(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (typeof value !== "string") return 0;
+
+  const cleaned = value
+    .replace(/[R$\s]/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
+
+  const parsed = parseFloat(cleaned);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function getConfigPlano(tipoContratoNome: string) {
+  if (tipoContratoNome === "Bronze") {
+    return {
+      nome: "Bronze",
+      entradaPadrao: ENTRADA_PADRAO_BRONZE,
+      faturadoBase: FATURADO_BASE_BRONZE,
+      totalBase: TOTAL_BASE_BRONZE,
+      tabela: TABELA_BRONZE,
+      cor: {
+        ativo: "bg-amber-700 text-white border-amber-800",
+        inativo:
+          "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300",
+        titulo: "text-amber-700",
+        tituloTabela: "text-amber-700",
+        destaque: "text-amber-100",
+        cardBorder: "border-amber-200",
+        cardBg: "bg-white",
+      },
+    };
+  }
+
+  if (tipoContratoNome === "Prata") {
+    return {
+      nome: "Prata",
+      entradaPadrao: ENTRADA_PADRAO_PRATA,
+      faturadoBase: null,
+      totalBase: TOTAL_BASE_PRATA,
+      tabela: TABELA_PRATA,
+      cor: {
+        ativo: "bg-slate-500 text-white border-slate-600",
+        inativo:
+          "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300",
+        titulo: "text-slate-700",
+        tituloTabela: "text-slate-700",
+        destaque: "text-slate-100",
+        cardBorder: "border-slate-200",
+        cardBg: "bg-white",
+      },
+    };
+  }
+
+  if (tipoContratoNome === "Ouro") {
+    return {
+      nome: "Ouro",
+      entradaPadrao: ENTRADA_PADRAO_OURO,
+      faturadoBase: null,
+      totalBase: TABELA_OURO[0].totalPlano,
+      tabela: TABELA_OURO,
+      cor: {
+        ativo: "bg-orange-500 text-white border-orange-600",
+        inativo:
+          "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:border-gray-300",
+        titulo: "text-gray-500",
+        tituloTabela: "text-gray-500",
+        destaque: "text-orange-100",
+        cardBorder: "border-gray-200",
+        cardBg: "bg-white",
+      },
+    };
+  }
+
+  if (tipoContratoNome === "Diamante") {
+    return {
+      nome: "Diamante",
+      entradaPadrao: ENTRADA_PADRAO_DIAMANTE,
+      faturadoBase: FATURADO_BASE_DIAMANTE,
+      totalBase: TOTAL_BASE_DIAMANTE,
+      tabela: TABELA_DIAMANTE,
+      cor: {
+        ativo: "bg-blue-600 text-white border-blue-700",
+        inativo:
+          "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300",
+        titulo: "text-blue-700",
+        tituloTabela: "text-blue-700",
+        destaque: "text-blue-100",
+        cardBorder: "border-blue-200",
+        cardBg: "bg-white",
+      },
+    };
+  }
+
+  return null;
+}
+
+export function StepPagamento({
+  formData,
+  handleChange,
+  setFormData,
+}: StepProps) {
   const formatMoney = (val: number) => {
-    return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(val);
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(val);
   };
 
-  const handleChangeValorLimitado = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeValorLimitado = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const valorDigitado = parseFloat(e.target.value);
     if (e.target.value === "" || valorDigitado <= 10000) {
       handleChange(e);
     }
   };
 
-  // ✅ agora recebe totalPlano (coluna do PDF)
-  const handleSelecionarOpcaoOuro = (parcelas: number, valorParcela: number, totalPlano: number) => {
-    if (!setFormData) return;
+  const planoConfig = getConfigPlano(formData.tipoContratoNome || "");
+  const valorEntradaNumero = parseMoneyLike(formData.valorEntrada);
 
-    setFormData((prev: any) => ({
-      ...prev,
-      valorTotalPlano: Number(totalPlano).toFixed(2),
-      detalhesParcelamento: `${parcelas}x de ${formatMoney(valorParcela)}`,
-    }));
-  };
+  const entradaAbaixoDoPadrao =
+    !!planoConfig &&
+    valorEntradaNumero > 0 &&
+    valorEntradaNumero < planoConfig.entradaPadrao;
 
-  const handleSelecionarOpcaoPrata = (parcelas: number, valorParcela: number) => {
-    if (!setFormData) return;
-    const totalCalculado = parcelas * valorParcela;
+  const entradaAcimaDoPadrao =
+    !!planoConfig && valorEntradaNumero > planoConfig.entradaPadrao;
 
-    setFormData((prev: any) => ({
-      ...prev,
-      valorTotalPlano: totalCalculado.toFixed(2),
-      detalhesParcelamento: `${parcelas}x de ${formatMoney(valorParcela)}`,
-    }));
-  };
+  const diferencaAbaixo =
+    entradaAbaixoDoPadrao && planoConfig
+      ? Number((planoConfig.entradaPadrao - valorEntradaNumero).toFixed(2))
+      : 0;
 
-  const isPlanoOuro = formData.tipoContratoNome === "Ouro";
-  const isPlanoPrata = formData.tipoContratoNome === "Prata";
+  const diferencaAcima =
+    entradaAcimaDoPadrao && planoConfig
+      ? Number((valorEntradaNumero - planoConfig.entradaPadrao).toFixed(2))
+      : 0;
 
-  // ✅ subPlanoOuro vive só no front (não mexe no backend)
-  const subPlanoOuro = (formData as any).subPlanoOuro || "Ouro 1";
-  const tabelaOuroAtual = getTabelaOuro(subPlanoOuro);
-  const entradaPadrao = ENTRADA_PADRAO_OURO[subPlanoOuro] ?? 0;
+  const ajustarParcelasPlano = Boolean(
+    (formData as any).ajustarParcelasPlano
+  );
 
   const aplicarEntradaPadrao = () => {
+    if (!setFormData || !planoConfig) return;
+    setFormData((prev: any) => ({
+      ...prev,
+      valorEntrada: String(planoConfig.entradaPadrao),
+      valorTotalPlano: "",
+      detalhesParcelamento: "",
+    }));
+  };
+
+  const selecionarModoParcelasPlano = (ajustar: boolean) => {
     if (!setFormData) return;
     setFormData((prev: any) => ({
       ...prev,
-      valorEntrada: String(entradaPadrao || 0),
+      ajustarParcelasPlano: ajustar,
+      valorTotalPlano: "",
+      detalhesParcelamento: "",
+    }));
+  };
+
+  const getOpcaoPlanoCalculada = (item: {
+    p: number;
+    parcela: number;
+    totalPlano: number;
+  }) => {
+    if (!planoConfig) {
+      return {
+        p: item.p,
+        parcelaExibida: item.parcela,
+        totalPlanoExibido: item.totalPlano,
+      };
+    }
+
+    const entradaAtual =
+      valorEntradaNumero > 0 ? valorEntradaNumero : planoConfig.entradaPadrao;
+
+    const saldoBase = Number(
+      (item.totalPlano - planoConfig.entradaPadrao).toFixed(2)
+    );
+
+    if (entradaAbaixoDoPadrao && ajustarParcelasPlano) {
+      const saldoAjustado = Number((saldoBase + diferencaAbaixo).toFixed(2));
+      const parcelaAjustada = Number((saldoAjustado / item.p).toFixed(2));
+      const totalAjustado = Number((entradaAtual + saldoAjustado).toFixed(2));
+
+      return {
+        p: item.p,
+        parcelaExibida: parcelaAjustada,
+        totalPlanoExibido: totalAjustado,
+      };
+    }
+
+    const parcelaMantida = Number((saldoBase / item.p).toFixed(2));
+    const totalReal = Number((entradaAtual + saldoBase).toFixed(2));
+
+    return {
+      p: item.p,
+      parcelaExibida: parcelaMantida,
+      totalPlanoExibido: totalReal,
+    };
+  };
+
+  const handleSelecionarOpcaoPlano = (item: {
+    p: number;
+    parcela: number;
+    totalPlano: number;
+  }) => {
+    if (!setFormData) return;
+
+    const opcao = getOpcaoPlanoCalculada(item);
+
+    setFormData((prev: any) => ({
+      ...prev,
+      valorTotalPlano: Number(opcao.totalPlanoExibido).toFixed(2),
+      detalhesParcelamento: `${opcao.p}x de ${formatMoney(
+        opcao.parcelaExibida
+      )}`,
     }));
   };
 
@@ -259,9 +399,6 @@ export function StepPagamento({ formData, handleChange, setFormData }: StepProps
     <Card>
       <CardHeader title="Negociação e Pagamento" />
 
-      {/* =================================================================
-          BLOCO 1: ENTRADA
-      ================================================================= */}
       <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-8">
         <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wide mb-4 border-b pb-2 border-gray-300">
           1. Dados da Entrada
@@ -274,30 +411,102 @@ export function StepPagamento({ formData, handleChange, setFormData }: StepProps
               name="valorEntrada"
               type="number"
               value={formData.valorEntrada}
-              onChange={handleChange}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                handleChange(e);
+
+                if (!setFormData) return;
+
+                setFormData((prev: any) => ({
+                  ...prev,
+                  valorEntrada: e.target.value,
+                  valorTotalPlano: "",
+                  detalhesParcelamento: "",
+                }));
+              }}
               placeholder="0,00"
             />
 
-            {/* ✅ Ajuda operacional: entrada padrão do subplano Ouro (2/3/4) */}
-            {isPlanoOuro && (
-              <div className="flex items-center justify-between gap-3 bg-white border border-gray-200 rounded-lg p-3">
-                <div className="text-sm text-gray-700">
-                  <div className="font-bold">Entrada padrão ({subPlanoOuro})</div>
-                  <div className="text-gray-600">{formatMoney(entradaPadrao)}</div>
+            {entradaAbaixoDoPadrao && planoConfig && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <div className="text-sm font-bold text-orange-900 mb-1">
+                  Entrada abaixo do padrão do Plano {planoConfig.nome}
                 </div>
-                <button
-                  type="button"
-                  onClick={aplicarEntradaPadrao}
-                  className="px-3 py-2 rounded-lg bg-orange-500 text-white text-sm font-bold hover:bg-orange-600"
-                >
-                  Aplicar
-                </button>
+                <div className="text-sm text-orange-800">
+                  Faltam <b>{formatMoney(diferencaAbaixo)}</b> para chegar na
+                  entrada padrão de{" "}
+                  <b>{formatMoney(planoConfig.entradaPadrao)}</b>.
+                </div>
+
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <button
+                    type="button"
+                    onClick={() => selecionarModoParcelasPlano(false)}
+                    className={`px-3 py-2 rounded-lg text-sm font-bold border transition ${
+                      !ajustarParcelasPlano
+                        ? "bg-orange-500 text-white border-orange-600"
+                        : "bg-white text-orange-900 border-orange-300 hover:bg-orange-100"
+                    }`}
+                  >
+                    Manter parcelas
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => selecionarModoParcelasPlano(true)}
+                    className={`px-3 py-2 rounded-lg text-sm font-bold border transition ${
+                      ajustarParcelasPlano
+                        ? "bg-orange-500 text-white border-orange-600"
+                        : "bg-white text-orange-900 border-orange-300 hover:bg-orange-100"
+                    }`}
+                  >
+                    Ajustar parcelas
+                  </button>
+                </div>
+
+                <div className="text-xs text-orange-800 mt-3">
+                  {ajustarParcelasPlano ? (
+                    <>
+                      A diferença de <b>{formatMoney(diferencaAbaixo)}</b> será
+                      adicionada ao saldo e redistribuída nas parcelas.
+                    </>
+                  ) : (
+                    <>
+                      As parcelas permanecerão como estão, com base na tabela
+                      padrão do Plano {planoConfig.nome}.
+                    </>
+                  )}
+                </div>
+
+                <div className="text-xs text-orange-900 mt-2 font-medium">
+                  A entrada foi alterada. Selecione novamente uma opção da
+                  tabela.
+                </div>
+              </div>
+            )}
+
+            {entradaAcimaDoPadrao && planoConfig && (
+              <div className="bg-red-50 border border-red-300 rounded-lg p-3">
+                <div className="text-sm font-bold text-red-700 mb-1">
+                  Atenção: entrada acima do permitido
+                </div>
+                <div className="text-sm text-red-700">
+                  O vendedor pegou <b>{formatMoney(diferencaAcima)}</b> a mais
+                  do que a entrada padrão de{" "}
+                  <b>{formatMoney(planoConfig.entradaPadrao)}</b>.
+                </div>
+
+                <div className="text-xs text-red-800 mt-2 font-medium">
+                  A entrada foi alterada. Selecione novamente uma opção da
+                  tabela.
+                </div>
               </div>
             )}
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-gray-900">Forma de Pagamento (Entrada)</label>
+            <label className="text-sm font-bold text-gray-900">
+              Forma de Pagamento (Entrada)
+            </label>
             <select
               name="formaDePagamentoEntradaNome"
               value={formData.formaDePagamentoEntradaNome}
@@ -336,9 +545,6 @@ export function StepPagamento({ formData, handleChange, setFormData }: StepProps
         </div>
       </div>
 
-      {/* =================================================================
-          BLOCO 2: O PLANO
-      ================================================================= */}
       <div className="bg-slate-50 p-4 rounded-lg border border-blue-100 mb-6">
         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-4 border-b pb-2 border-slate-200">
           2. Dados do Plano (Saldo)
@@ -346,19 +552,43 @@ export function StepPagamento({ formData, handleChange, setFormData }: StepProps
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-gray-900">Qual o Plano?</label>
+            <label className="text-sm font-bold text-gray-900">
+              Qual o Plano?
+            </label>
             <select
               name="tipoContratoNome"
               value={formData.tipoContratoNome || ""}
-              onChange={handleChange}
+              onChange={(e) => {
+                handleChange(e);
+
+                if (!setFormData) return;
+
+                const novoPlano = e.target.value;
+
+                if (
+                  novoPlano === "Bronze" ||
+                  novoPlano === "Prata" ||
+                  novoPlano === "Ouro" ||
+                  novoPlano === "Diamante"
+                ) {
+                  setFormData((prev: any) => ({
+                    ...prev,
+                    tipoContratoNome: novoPlano,
+                    ajustarParcelasPlano: false,
+                    valorTotalPlano: "",
+                    detalhesParcelamento: "",
+                  }));
+                }
+              }}
               className="border p-2.5 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 shadow-sm"
               required
             >
               <option value="" disabled>
                 Selecione...
               </option>
-              <option value="Ouro">Ouro</option>
+              <option value="Bronze">Bronze</option>
               <option value="Prata">Prata</option>
+              <option value="Ouro">Ouro</option>
               <option value="Diamante">Diamante</option>
             </select>
           </div>
@@ -371,78 +601,74 @@ export function StepPagamento({ formData, handleChange, setFormData }: StepProps
             onChange={handleChangeValorLimitado}
             max={10000}
             required
-            placeholder="Selecione na tabela"
+            placeholder={planoConfig ? "Selecione na tabela" : "Digite o valor"}
             className="bg-white text-gray-900"
           />
 
-          {/* ✅ aparece só se for Ouro: escolha 1–4 */}
-          {isPlanoOuro && (
+          {planoConfig && (
             <div className="md:col-span-2">
-              <label className="text-sm font-bold text-gray-900">Qual Tabela do Ouro?</label>
-              <select
-                value={subPlanoOuro}
-                onChange={(e) => {
-                  if (!setFormData) return;
-                  const novo = e.target.value;
-                  setFormData((prev: any) => ({
-                    ...prev,
-                    subPlanoOuro: novo,
-                    // limpa seleção anterior pra não ficar “travado” num total de outra tabela
-                    valorTotalPlano: "",
-                    detalhesParcelamento: "",
-                  }));
-                }}
-                className="mt-1 border p-2.5 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 shadow-sm w-full"
-              >
-                <option value="Ouro 1">Ouro 1</option>
-                <option value="Ouro 2">Ouro 2</option>
-                <option value="Ouro 3">Ouro 3</option>
-                <option value="Ouro 4">Ouro 4</option>
-              </select>
-
-              <div className="text-xs text-gray-600 mt-2">
-                Você selecionou: <b>{subPlanoOuro}</b>. (Entrada padrão:{" "}
-                <b>{formatMoney(entradaPadrao)}</b>)
+              <div className="text-xs text-gray-600 mt-1">
+                Plano selecionado: <b>{planoConfig.nome}</b>. Entrada padrão:{" "}
+                <b>{formatMoney(planoConfig.entradaPadrao)}</b>
+                {planoConfig.faturadoBase !== null && (
+                  <>
+                    {" "}
+                    | Faturado base:{" "}
+                    <b>{formatMoney(planoConfig.faturadoBase)}</b> | Total
+                    base: <b>{formatMoney(planoConfig.totalBase)}</b>
+                  </>
+                )}
               </div>
             </div>
           )}
         </div>
 
-        {/* =========================
-            TABELA OURO (1–4)
-        ========================= */}
-        {isPlanoOuro && (
-          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
-            <h3 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
-              Tabela {subPlanoOuro}
+        {planoConfig && (
+          <div
+            className={`border rounded-lg p-4 mb-6 shadow-sm ${planoConfig.cor.cardBg} ${planoConfig.cor.cardBorder}`}
+          >
+            <h3
+              className={`text-xs font-bold mb-2 uppercase tracking-wider ${planoConfig.cor.tituloTabela}`}
+            >
+              Tabela Plano {planoConfig.nome}
             </h3>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-52 overflow-y-auto pr-2 custom-scrollbar">
-              {tabelaOuroAtual.map((item) => {
-                const totalOpcao = Number(item.totalPlano).toFixed(2);
-                const isSelected = String(formData.valorTotalPlano || "") === totalOpcao;
+              {planoConfig.tabela.map((item) => {
+                const opcao = getOpcaoPlanoCalculada(item);
+                const totalOpcao = Number(opcao.totalPlanoExibido).toFixed(2);
+                const isSelected =
+                  String(formData.valorTotalPlano || "") === totalOpcao;
 
                 return (
                   <button
                     key={item.p}
                     type="button"
-                    onClick={() => handleSelecionarOpcaoOuro(item.p, item.parcela, item.totalPlano)}
+                    onClick={() => handleSelecionarOpcaoPlano(item)}
                     className={`
                       flex justify-between items-center p-2 rounded text-xs transition-all border
-                      ${
-                        isSelected
-                          ? "bg-orange-500 text-white border-orange-600 shadow-md transform scale-[1.02]"
-                          : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
-                      }
+                      ${isSelected ? planoConfig.cor.ativo : planoConfig.cor.inativo}
                     `}
-                    title={`Total do Plano: ${formatMoney(item.totalPlano)}`}
+                    title={`Total do Plano: ${formatMoney(
+                      opcao.totalPlanoExibido
+                    )}`}
                   >
-                    <span className={`font-semibold ${isSelected ? "text-orange-100" : "text-gray-500"}`}>
+                    <span
+                      className={`font-semibold ${
+                        isSelected
+                          ? planoConfig.cor.destaque
+                          : planoConfig.cor.titulo
+                      }`}
+                    >
                       {item.p}x
                     </span>
 
-                    <span className={`font-bold ${isSelected ? "text-white" : "text-gray-800"}`}>
-                      {formatMoney(item.parcela)}
+                    <span
+                      className={`font-bold ${
+                        isSelected ? "text-white" : "text-gray-800"
+                      }`}
+                    >
+                      {formatMoney(opcao.parcelaExibida)}
                     </span>
                   </button>
                 );
@@ -450,55 +676,24 @@ export function StepPagamento({ formData, handleChange, setFormData }: StepProps
             </div>
 
             <div className="mt-3 text-xs text-gray-600">
-              * Ao clicar, salvamos o <b>Valor Total do Plano</b> conforme tabela ({subPlanoOuro}).
-            </div>
-          </div>
-        )}
-
-        {/* =========================
-            TABELA PRATA (como estava)
-        ========================= */}
-        {isPlanoPrata && (
-          <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6 shadow-sm">
-            <h3 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">
-              Tabela Prata 2025
-            </h3>
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-52 overflow-y-auto pr-2 custom-scrollbar">
-              {TABELA_PRATA_2025.map((item) => {
-                const totalOpcao = (item.p * item.v).toFixed(2);
-                const isSelected = formData.valorTotalPlano === totalOpcao;
-
-                return (
-                  <button
-                    key={item.p}
-                    type="button"
-                    onClick={() => handleSelecionarOpcaoPrata(item.p, item.v)}
-                    className={`
-                      flex justify-between items-center p-2 rounded text-xs transition-all border
-                      ${
-                        isSelected
-                          ? "bg-orange-500 text-white border-orange-600 shadow-md transform scale-[1.02]"
-                          : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:border-gray-300"
-                      }
-                    `}
-                  >
-                    <span className={`font-semibold ${isSelected ? "text-orange-100" : "text-gray-500"}`}>
-                      {item.p}x
-                    </span>
-                    <span className={`font-bold ${isSelected ? "text-white" : "text-gray-800"}`}>
-                      {formatMoney(item.v)}
-                    </span>
-                  </button>
-                );
-              })}
+              * Ao clicar, salvamos o <b>Valor Total do Plano</b> conforme a
+              tabela do Plano {planoConfig.nome}.
+              {entradaAbaixoDoPadrao && ajustarParcelasPlano && (
+                <>
+                  {" "}
+                  A diferença da entrada foi somada ao saldo para recalcular as
+                  parcelas.
+                </>
+              )}
             </div>
           </div>
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-gray-900">Forma de Pagamento (Plano)</label>
+            <label className="text-sm font-bold text-gray-900">
+              Forma de Pagamento (Plano)
+            </label>
             <select
               name="formaDePagamentoNome"
               value={formData.formaDePagamentoNome}
@@ -521,27 +716,35 @@ export function StepPagamento({ formData, handleChange, setFormData }: StepProps
               name="detalhesParcelamento"
               value={formData.detalhesParcelamento}
               onChange={handleChange}
-              placeholder="Ex: 12x de R$ 392,00 (Coloque a data de inicio de pagamento)"
+              placeholder="Ex: 12x de R$ 392,00 (Coloque a data de início de pagamento)"
             />
           </div>
         </div>
       </div>
 
       <div className="mt-4">
-        <label className="text-sm font-bold text-gray-700">Observações Gerais</label>
+        <label className="text-sm font-bold text-gray-700">
+          Observações Gerais
+        </label>
         <textarea
           name="obsPagamento"
           value={formData.obsPagamento}
           onChange={handleChange}
           rows={3}
-          placeholder="Informações adicionais | data de inicio de pagamento do Plano"
+          placeholder="Informações adicionais | data de início de pagamento do Plano"
           className="border p-3 mt-1 rounded-lg bg-white outline-none focus:ring-2 focus:ring-black-500 w-full text-gray-900"
         ></textarea>
 
-        {/* ✅ Dica: deixa o subplano visível pra equipe */}
-        {isPlanoOuro && (
+        {planoConfig && (
           <div className="text-xs text-gray-600 mt-2">
-            Dica: você pode registrar no Obs: <b>{subPlanoOuro}</b>.
+            Dica: você pode registrar no Obs que o Plano {planoConfig.nome} tem
+            entrada padrão de <b>{formatMoney(planoConfig.entradaPadrao)}</b>
+            {planoConfig.faturadoBase !== null && (
+              <>
+                {" "}
+                e total base de <b>{formatMoney(planoConfig.totalBase)}</b>.
+              </>
+            )}
           </div>
         )}
       </div>

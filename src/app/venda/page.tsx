@@ -1,5 +1,4 @@
-// app/vendas/page.tsx  
-// ✅ Arquivo COMPLETO pronto pra copiar e colar
+// app/vendas/page.tsx
 "use client";
 import Cookies from "js-cookie";
 
@@ -31,12 +30,16 @@ const STEPS_LABELS = [
 
 function makeRequestId() {
   try {
-    // browsers modernos
     // @ts-ignore
-    if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
   } catch {}
-  // fallback simples
   return `req_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+function isFilled(value: unknown) {
+  return String(value ?? "").trim() !== "";
 }
 
 export default function VendaPage() {
@@ -44,14 +47,13 @@ export default function VendaPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  // ✅ trava forte contra duplo clique / duplo envio (mesmo que estado demore a atualizar)
   const sendingRef = useRef(false);
-  const requestIdRef = useRef<string>(makeRequestId()); // mesmo id durante esta tentativa
+  const requestIdRef = useRef<string>(makeRequestId());
 
   const [formData, setFormData] = useState<VendaFormData>({
     tipoVenda: "Presencial",
     tipoContratoNome: "Ouro",
-    numeroContrato: "", // ✅ deixa vazio: o BACKEND define o número oficial ao finalizar
+    numeroContrato: "",
     valorTotalPlano: "",
     nomeTitular: "",
     cpfTitular: "",
@@ -70,6 +72,7 @@ export default function VendaPage() {
     dataNascimentoCoTitular: "",
     profissaoCoTitular: "",
     sexoCoTitular: "Feminino",
+
     // Dependentes
     nomeDependente1: "",
     cpfDependente1: "",
@@ -91,6 +94,7 @@ export default function VendaPage() {
     parentescoDependente4: "",
     telefoneDependente4: "",
     dataNascimentoDependente4: "",
+
     // Endereço e Pagamento
     cep: "",
     rua: "",
@@ -112,26 +116,105 @@ export default function VendaPage() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleNext = () => {
+  const validarStepAtual = () => {
+    // STEP 1 - TITULAR
     if (currentStep === 1) {
-      const { telefoneTitular, emailTitular, nomeTitular, cpfTitular } = formData;
+      if (!isFilled(formData.nomeTitular)) {
+        toast.error("Preencha o nome do titular.");
+        return false;
+      }
 
-      if (!telefoneTitular || !emailTitular || !nomeTitular || !cpfTitular) {
-        alert(
-          "Por favor, preencha os campos obrigatórios do Titular (Nome, CPF, Telefone e Email) antes de continuar."
-        );
-        return;
+      if (!isFilled(formData.cpfTitular)) {
+        toast.error("Preencha o CPF do titular.");
+        return false;
+      }
+
+      if (!isFilled(formData.telefoneTitular)) {
+        toast.error("Preencha o telefone do titular.");
+        return false;
+      }
+
+      if (!isFilled(formData.emailTitular)) {
+        toast.error("Preencha o e-mail do titular.");
+        return false;
+      }
+
+      if (!isFilled(formData.dataNascimentoTitular)) {
+    toast.error("Preencha a data de nascimento do titular.");
+    return false;
+  }
+
+      if (!isFilled(formData.estadoCivilTitular)) {
+        toast.error("Preencha o estado civil do titular.");
+        return false;
+      }
+
+      if (!isFilled(formData.profissaoTitular)) {
+        toast.error("Preencha a profissão do titular.");
+        return false;
       }
     }
+
+    // STEP 4 - ENDEREÇO
+    if (currentStep === 4) {
+      if (!isFilled(formData.cep)) {
+        toast.error("Preencha o CEP.");
+        return false;
+      }
+
+      // Aqui o campo já é "Rua, Nº" junto
+      if (!isFilled(formData.rua)) {
+        toast.error("Preencha a rua e o número.");
+        return false;
+      }
+
+      if (!isFilled(formData.bairro)) {
+        toast.error("Preencha o bairro.");
+        return false;
+      }
+
+      if (!isFilled(formData.cidade)) {
+        toast.error("Preencha a cidade.");
+        return false;
+      }
+
+      if (!isFilled(formData.estado)) {
+        toast.error("Preencha o estado.");
+        return false;
+      }
+    }
+
+    // STEP 5 - PAGAMENTO
+    if (currentStep === 5) {
+      if (!isFilled(formData.tipoContratoNome)) {
+        toast.error("Selecione o plano.");
+        return false;
+      }
+
+      if (!isFilled(formData.valorTotalPlano)) {
+        toast.error("Selecione uma opção na tabela do plano.");
+        return false;
+      }
+
+      if (!isFilled(formData.formaDePagamentoNome)) {
+        toast.error("Selecione a forma de pagamento do plano.");
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleNext = () => {
+    const podeAvancar = validarStepAtual();
+    if (!podeAvancar) return;
 
     setCurrentStep((prev) => Math.min(prev + 1, STEPS_LABELS.length - 1));
   };
 
   const handlePrev = () => setCurrentStep((prev) => Math.max(prev - 1, 0));
 
-  // --- FUNÇÃO DE ENVIO (com trava total) ---
   const processarEnvio = async (gerarContrato: boolean) => {
-    // ✅ trava imediatamente (antes do setLoading)
     if (sendingRef.current) return;
     sendingRef.current = true;
     setLoading(true);
@@ -145,23 +228,20 @@ export default function VendaPage() {
         return;
       }
 
-      // ✅ payload final: NÃO manda número oficial; o backend decide
       const payload: any = {
         ...formData,
-        numeroContrato: "", // força vazio pra evitar "preview" duplicado
+        numeroContrato: "",
         gerarContrato,
-        requestId: requestIdRef.current, // ✅ id da tentativa (anti-duplo envio)
+        requestId: requestIdRef.current,
       };
 
       const { data } = await api.post("/api/vendas/criar-analise", payload, {
         headers: {
           Authorization: `Bearer ${token}`,
-          // ✅ se você quiser usar depois no back, já está pronto
           "Idempotency-Key": requestIdRef.current,
         },
       });
 
-      // Feedback baseado na escolha
       if (gerarContrato) {
         if (data.clickSignSucesso === false) {
           toast.warning("Venda salva, mas o contrato falhou!", {
@@ -181,11 +261,6 @@ export default function VendaPage() {
         });
       }
 
-      // ✅ opcional: se quiser mostrar número do contrato retornado
-      // if (data.numeroContrato) {
-      //   toast.message("Número do contrato", { description: String(data.numeroContrato) });
-      // }
-
       router.push("/dashboard");
     } catch (error: any) {
       console.error(error);
@@ -195,7 +270,6 @@ export default function VendaPage() {
         description: msg,
       });
 
-      // ✅ libera para tentar novamente se deu erro
       requestIdRef.current = makeRequestId();
     } finally {
       setLoading(false);
@@ -205,6 +279,7 @@ export default function VendaPage() {
 
   const renderStep = () => {
     const props = { formData, handleChange, setFormData };
+
     switch (currentStep) {
       case 0:
         return <StepContrato {...props} />;
@@ -229,7 +304,6 @@ export default function VendaPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 relative">
-      {/* Header Fixo */}
       <div className="bg-white shadow-sm sticky top-0 z-10 px-4 py-4">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <h1 className="text-xl font-bold text-gray-800">Nova Venda</h1>
@@ -238,6 +312,7 @@ export default function VendaPage() {
             <span className="text-blue-600">{STEPS_LABELS[currentStep]}</span>
           </div>
         </div>
+
         <div className="w-full bg-gray-200 h-1.5 mt-4">
           <div
             className="bg-blue-600 h-1.5 transition-all duration-300 ease-in-out"
@@ -250,10 +325,8 @@ export default function VendaPage() {
 
       <main className="max-w-4xl mx-auto px-4 py-8">{renderStep()}</main>
 
-      {/* Footer de Navegação FIXO */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
-          {/* Botão Voltar */}
           <div className="w-32">
             {currentStep > 0 && (
               <Button
@@ -267,12 +340,10 @@ export default function VendaPage() {
             )}
           </div>
 
-          {/* Botão Próximo ou Finalizar */}
           <div className="w-auto md:w-auto">
             {isLastStep ? (
               <Button
                 onClick={() => {
-                  // se você tem esse campo nos steps:
                   // @ts-ignore
                   const deveGerar = formData.tipoEnvioContrato === "Digital";
                   processarEnvio(Boolean(deveGerar));

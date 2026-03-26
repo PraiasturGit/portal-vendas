@@ -1,7 +1,7 @@
-// app/vendas/page.tsx
+// src/app/venda/page.tsx
 "use client";
-import Cookies from "js-cookie";
 
+import Cookies from "js-cookie";
 import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/service/api";
@@ -117,6 +117,27 @@ export default function VendaPage() {
   };
 
   const validarStepAtual = () => {
+    // STEP 0 - CONTRATO
+    if (currentStep === 0) {
+      if (!isFilled(formData.tipoVenda)) {
+        toast.error("Selecione a modalidade da venda.");
+        return false;
+      }
+
+      const isPresencial =
+        String(formData.tipoVenda || "").trim().toLowerCase() === "presencial";
+
+      const isManual =
+        String((formData as any).tipoEnvioContrato || "")
+          .trim()
+          .toLowerCase() === "manual";
+
+      if (isPresencial && isManual && !isFilled(formData.numeroContrato)) {
+        toast.error("Preencha o número do contrato para venda presencial.");
+        return false;
+      }
+    }
+
     // STEP 1 - TITULAR
     if (currentStep === 1) {
       if (!isFilled(formData.nomeTitular)) {
@@ -140,9 +161,9 @@ export default function VendaPage() {
       }
 
       if (!isFilled(formData.dataNascimentoTitular)) {
-    toast.error("Preencha a data de nascimento do titular.");
-    return false;
-  }
+        toast.error("Preencha a data de nascimento do titular.");
+        return false;
+      }
 
       if (!isFilled(formData.estadoCivilTitular)) {
         toast.error("Preencha o estado civil do titular.");
@@ -162,7 +183,6 @@ export default function VendaPage() {
         return false;
       }
 
-      // Aqui o campo já é "Rua, Nº" junto
       if (!isFilled(formData.rua)) {
         toast.error("Preencha a rua e o número.");
         return false;
@@ -228,9 +248,26 @@ export default function VendaPage() {
         return;
       }
 
+      const tipoVendaNormalizado = String(formData.tipoVenda || "")
+        .trim()
+        .toLowerCase();
+
+      const tipoEnvioNormalizado = String((formData as any).tipoEnvioContrato || "")
+        .trim()
+        .toLowerCase();
+
+      if (
+        tipoVendaNormalizado === "presencial" &&
+        tipoEnvioNormalizado === "manual" &&
+        !isFilled(formData.numeroContrato)
+      ) {
+        toast.error("Número do contrato é obrigatório para venda presencial.");
+        return;
+      }
+
       const payload: any = {
         ...formData,
-        numeroContrato: "",
+        numeroContrato: formData.numeroContrato || "",
         gerarContrato,
         requestId: requestIdRef.current,
       };

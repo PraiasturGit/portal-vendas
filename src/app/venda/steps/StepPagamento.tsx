@@ -4,9 +4,17 @@ import { Input } from "@/components/ui/Input";
 import { StepProps } from "../types";
 
 /* =========================================================================
+   TIPOS DE ENTRADA
+======================================================================== */
+const TIPO_ENTRADA = {
+  COM_ENTRADA: "COM_ENTRADA",
+  SEM_ENTRADA: "SEM_ENTRADA",
+  ISENTA: "ISENTA",
+} as const;
+
+/* =========================================================================
    BASE DE PROGRESSÃO
 ======================================================================== */
-
 const ENTRADA_PADRAO_OURO = 880;
 
 /* =========================================================================
@@ -197,11 +205,6 @@ function getConfigPlano(tipoContratoNome: string) {
         ativo: "bg-amber-700 text-white border-amber-800",
         inativo:
           "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 hover:border-amber-300",
-        titulo: "text-amber-700",
-        tituloTabela: "text-amber-700",
-        destaque: "text-amber-100",
-        cardBorder: "border-amber-200",
-        cardBg: "bg-white",
       },
     };
   }
@@ -217,11 +220,6 @@ function getConfigPlano(tipoContratoNome: string) {
         ativo: "bg-slate-500 text-white border-slate-600",
         inativo:
           "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100 hover:border-slate-300",
-        titulo: "text-slate-700",
-        tituloTabela: "text-slate-700",
-        destaque: "text-slate-100",
-        cardBorder: "border-slate-200",
-        cardBg: "bg-white",
       },
     };
   }
@@ -236,12 +234,7 @@ function getConfigPlano(tipoContratoNome: string) {
       cor: {
         ativo: "bg-orange-500 text-white border-orange-600",
         inativo:
-          "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:border-gray-300",
-        titulo: "text-gray-500",
-        tituloTabela: "text-gray-500",
-        destaque: "text-orange-100",
-        cardBorder: "border-gray-200",
-        cardBg: "bg-white",
+          "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 hover:border-gray-300",
       },
     };
   }
@@ -257,16 +250,33 @@ function getConfigPlano(tipoContratoNome: string) {
         ativo: "bg-blue-600 text-white border-blue-700",
         inativo:
           "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:border-blue-300",
-        titulo: "text-blue-700",
-        tituloTabela: "text-blue-700",
-        destaque: "text-blue-100",
-        cardBorder: "border-blue-200",
-        cardBg: "bg-white",
       },
     };
   }
 
   return null;
+}
+
+function SectionHeader({
+  step,
+  title,
+  subtitle,
+}: {
+  step: string;
+  title: string;
+  subtitle?: string;
+}) {
+  return (
+    <div className="mb-3">
+      <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-gray-500">
+        {step}
+      </div>
+      <h3 className="text-[15px] font-bold text-gray-900 mt-1">{title}</h3>
+      {subtitle ? (
+        <p className="text-xs text-gray-500 mt-1 leading-relaxed">{subtitle}</p>
+      ) : null}
+    </div>
+  );
 }
 
 export function StepPagamento({
@@ -281,70 +291,188 @@ export function StepPagamento({
     }).format(val);
   };
 
-  const handleChangeValorLimitado = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const valorDigitado = parseFloat(e.target.value);
-    if (e.target.value === "" || valorDigitado <= 10000) {
-      handleChange(e);
-    }
-  };
-
   const planoConfig = getConfigPlano(formData.tipoContratoNome || "");
+  const tipoEntradaAtual = String(
+    (formData as any).tipoEntrada || TIPO_ENTRADA.COM_ENTRADA
+  ).toUpperCase();
+
   const valorEntradaNumero = parseMoneyLike(formData.valorEntrada);
+
+  const isComEntrada = tipoEntradaAtual === TIPO_ENTRADA.COM_ENTRADA;
+  const isSemEntrada = tipoEntradaAtual === TIPO_ENTRADA.SEM_ENTRADA;
+  const isIsenta = tipoEntradaAtual === TIPO_ENTRADA.ISENTA;
+
+  const respostaEntrada = isSemEntrada || isIsenta ? "NAO" : "SIM";
 
   const entradaAbaixoDoPadrao =
     !!planoConfig &&
+    isComEntrada &&
     valorEntradaNumero > 0 &&
     valorEntradaNumero < planoConfig.entradaPadrao;
 
   const entradaAcimaDoPadrao =
-    !!planoConfig && valorEntradaNumero > planoConfig.entradaPadrao;
+    !!planoConfig &&
+    isComEntrada &&
+    valorEntradaNumero > planoConfig.entradaPadrao;
 
   const diferencaAbaixo =
     entradaAbaixoDoPadrao && planoConfig
       ? Number((planoConfig.entradaPadrao - valorEntradaNumero).toFixed(2))
       : 0;
 
-  const diferencaAcima =
-    entradaAcimaDoPadrao && planoConfig
-      ? Number((valorEntradaNumero - planoConfig.entradaPadrao).toFixed(2))
-      : 0;
-
   const ajustarParcelasPlano = Boolean(
     (formData as any).ajustarParcelasPlano
   );
 
-  const aplicarEntradaPadrao = () => {
-    if (!setFormData || !planoConfig) return;
+  const atualizarCampos = (updates: Record<string, any>) => {
+    if (!setFormData) return;
     setFormData((prev: any) => ({
       ...prev,
-      valorEntrada: String(planoConfig.entradaPadrao),
+      ...updates,
+    }));
+  };
+
+  const handleSelecionarPlano = (novoPlano: string) => {
+    if (!setFormData) return;
+
+    const config = getConfigPlano(novoPlano);
+    const tipoEntradaNovo = String(
+      (formData as any).tipoEntrada || TIPO_ENTRADA.COM_ENTRADA
+    ).toUpperCase();
+
+    let proximaEntrada = "";
+
+    if (config) {
+      if (tipoEntradaNovo === TIPO_ENTRADA.COM_ENTRADA) {
+        proximaEntrada = String(config.entradaPadrao);
+      } else if (tipoEntradaNovo === TIPO_ENTRADA.ISENTA) {
+        proximaEntrada = String(config.entradaPadrao);
+      } else {
+        proximaEntrada = "0";
+      }
+    }
+
+    setFormData((prev: any) => ({
+      ...prev,
+      tipoContratoNome: novoPlano,
+      valorEntrada: proximaEntrada,
+      formaDePagamentoEntradaNome:
+        tipoEntradaNovo === TIPO_ENTRADA.COM_ENTRADA
+          ? prev.formaDePagamentoEntradaNome || "Pix"
+          : "",
+      valorParcela:
+        tipoEntradaNovo === TIPO_ENTRADA.COM_ENTRADA
+          ? prev.valorParcela || ""
+          : "",
+      ajustarParcelasPlano: false,
+      valorTotalPlano: "",
+      detalhesParcelamento: "",
+    }));
+  };
+
+  const selecionarVaiTerEntrada = (vaiTer: boolean) => {
+    if (!setFormData) return;
+
+    if (vaiTer) {
+      const entradaPadrao = planoConfig?.entradaPadrao ?? "";
+      setFormData((prev: any) => ({
+        ...prev,
+        tipoEntrada: TIPO_ENTRADA.COM_ENTRADA,
+        valorEntrada: entradaPadrao ? String(entradaPadrao) : "",
+        formaDePagamentoEntradaNome: prev.formaDePagamentoEntradaNome || "Pix",
+        valorParcela: prev.valorParcela || "",
+        ajustarParcelasPlano: false,
+        valorTotalPlano: "",
+        detalhesParcelamento: "",
+      }));
+      return;
+    }
+
+    setFormData((prev: any) => ({
+      ...prev,
+      tipoEntrada: TIPO_ENTRADA.SEM_ENTRADA,
+      valorEntrada: "0",
+      formaDePagamentoEntradaNome: "",
+      valorParcela: "",
+      ajustarParcelasPlano: false,
+      valorTotalPlano: "",
+      detalhesParcelamento: "",
+    }));
+  };
+
+  const selecionarSemEntradaTipo = (tipo: "SEM_ENTRADA" | "ISENTA") => {
+    if (!setFormData) return;
+
+    setFormData((prev: any) => ({
+      ...prev,
+      tipoEntrada: tipo,
+      valorEntrada:
+        tipo === "SEM_ENTRADA"
+          ? "0"
+          : String(planoConfig?.entradaPadrao || ""),
+      formaDePagamentoEntradaNome: "",
+      valorParcela: "",
+      ajustarParcelasPlano: false,
       valorTotalPlano: "",
       detalhesParcelamento: "",
     }));
   };
 
   const selecionarModoParcelasPlano = (ajustar: boolean) => {
+    atualizarCampos({
+      ajustarParcelasPlano: ajustar,
+      valorTotalPlano: "",
+      detalhesParcelamento: "",
+    });
+  };
+
+  const handleChangeEntrada = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const valorDigitado = e.target.value;
+
     if (!setFormData) return;
+
+    const normalizado = valorDigitado
+      .replace(/[^\d,.-]/g, "")
+      .replace(/\.(?=.*\.)/g, "");
+
     setFormData((prev: any) => ({
       ...prev,
-      ajustarParcelasPlano: ajustar,
+      valorEntrada: normalizado,
       valorTotalPlano: "",
       detalhesParcelamento: "",
     }));
   };
 
-  const getOpcaoPlanoCalculada = (item: {
-    p: number;
-    parcela: number;
-    totalPlano: number;
-  }) => {
+  const getOpcaoPlanoCalculada = (item: TabelaItem) => {
     if (!planoConfig) {
       return {
         p: item.p,
         parcelaExibida: item.parcela,
         totalPlanoExibido: item.totalPlano,
+      };
+    }
+
+    if (isSemEntrada) {
+      const totalSemEntrada = Number(item.totalPlano.toFixed(2));
+      const parcelaSemEntrada = Number((totalSemEntrada / item.p).toFixed(2));
+
+      return {
+        p: item.p,
+        parcelaExibida: parcelaSemEntrada,
+        totalPlanoExibido: totalSemEntrada,
+      };
+    }
+
+    if (isIsenta) {
+      const totalIsento = Number(
+        (item.totalPlano - planoConfig.entradaPadrao).toFixed(2)
+      );
+      const parcelaIsenta = Number((totalIsento / item.p).toFixed(2));
+
+      return {
+        p: item.p,
+        parcelaExibida: parcelaIsenta,
+        totalPlanoExibido: totalIsento,
       };
     }
 
@@ -377,11 +505,7 @@ export function StepPagamento({
     };
   };
 
-  const handleSelecionarOpcaoPlano = (item: {
-    p: number;
-    parcela: number;
-    totalPlano: number;
-  }) => {
+  const handleSelecionarOpcaoPlano = (item: TabelaItem) => {
     if (!setFormData) return;
 
     const opcao = getOpcaoPlanoCalculada(item);
@@ -395,358 +519,358 @@ export function StepPagamento({
     }));
   };
 
+  const opcaoSelecionada =
+    planoConfig?.tabela.find((item) => {
+      const opcao = getOpcaoPlanoCalculada(item);
+      return Number(opcao.totalPlanoExibido).toFixed(2) === String(formData.valorTotalPlano || "");
+    }) || null;
+
+  const resumoOpcaoSelecionada = opcaoSelecionada
+    ? getOpcaoPlanoCalculada(opcaoSelecionada)
+    : null;
+
+  const tituloTabela = () => {
+    if (!planoConfig) return "Escolha a parcela";
+    return `Escolha a parcela do Plano ${planoConfig.nome}`;
+  };
+
   return (
     <Card>
-      <CardHeader title="Negociação e Pagamento" />
+      <CardHeader title="Pagamento da venda" />
 
-      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-8">
-        <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wide mb-4 border-b pb-2 border-gray-300">
-          1. Dados da Entrada
-        </h3>
+      <div className="space-y-4">
+        <section className="rounded-2xl border border-gray-200 bg-white p-4">
+          <SectionHeader step="Etapa 1" title="Escolha o plano" />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-2">
-            <Input
-              label="Valor da Entrada (R$)"
-              name="valorEntrada"
-              type="number"
-              value={formData.valorEntrada}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                handleChange(e);
+          <select
+            name="tipoContratoNome"
+            value={formData.tipoContratoNome || ""}
+            onChange={(e) => {
+              handleChange(e);
 
-                if (!setFormData) return;
+              const novoPlano = e.target.value;
 
-                setFormData((prev: any) => ({
-                  ...prev,
-                  valorEntrada: e.target.value,
-                  valorTotalPlano: "",
-                  detalhesParcelamento: "",
-                }));
-              }}
-              placeholder="0,00"
+              if (
+                novoPlano === "Bronze" ||
+                novoPlano === "Prata" ||
+                novoPlano === "Ouro" ||
+                novoPlano === "Diamante"
+              ) {
+                handleSelecionarPlano(novoPlano);
+              }
+            }}
+            className="w-full border p-3.5 rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 shadow-sm text-sm"
+            required
+          >
+            <option value="" disabled>
+              Selecione...
+            </option>
+            <option value="Bronze">Bronze</option>
+            <option value="Prata">Prata</option>
+            <option value="Ouro">Ouro</option>
+            <option value="Diamante">Diamante</option>
+          </select>
+        </section>
+
+        <section className="rounded-2xl border border-gray-200 bg-white p-4">
+          <SectionHeader
+            step="Etapa 2"
+            title="Vai ter entrada nessa venda?"
+          />
+
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => selecionarVaiTerEntrada(true)}
+              className={`w-full rounded-2xl border p-4 text-left transition ${
+                respostaEntrada === "SIM"
+                  ? "border-orange-500 bg-orange-50"
+                  : "border-gray-200 bg-white active:scale-[0.99]"
+              }`}
+            >
+              <div className="text-sm font-bold text-gray-900">Sim</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => selecionarVaiTerEntrada(false)}
+              className={`w-full rounded-2xl border p-4 text-left transition ${
+                respostaEntrada === "NAO"
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 bg-white active:scale-[0.99]"
+              }`}
+            >
+              <div className="text-sm font-bold text-gray-900">Não</div>
+            </button>
+          </div>
+        </section>
+
+        {respostaEntrada === "NAO" && (
+          <section className="rounded-2xl border border-gray-200 bg-white p-4">
+            <SectionHeader
+              step="Etapa 3"
+              title="Como será o plano?"
             />
 
-            {entradaAbaixoDoPadrao && planoConfig && (
-              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                <div className="text-sm font-bold text-orange-900 mb-1">
-                  Entrada abaixo do padrão do Plano {planoConfig.nome}
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => selecionarSemEntradaTipo("SEM_ENTRADA")}
+                className={`w-full rounded-2xl border p-4 text-left transition ${
+                  isSemEntrada
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 bg-white active:scale-[0.99]"
+                }`}
+              >
+                <div className="text-sm font-bold text-gray-900">
+                  Plano integral
                 </div>
-                <div className="text-sm text-orange-800">
-                  Faltam <b>{formatMoney(diferencaAbaixo)}</b> para chegar na
-                  entrada padrão de{" "}
-                  <b>{formatMoney(planoConfig.entradaPadrao)}</b>.
+                <div className="text-xs text-gray-600 mt-1">
+                  Cliente não paga entrada.
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => selecionarSemEntradaTipo("ISENTA")}
+                className={`w-full rounded-2xl border p-4 text-left transition ${
+                  isIsenta
+                    ? "border-emerald-500 bg-emerald-50"
+                    : "border-gray-200 bg-white active:scale-[0.99]"
+                }`}
+              >
+                <div className="text-sm font-bold text-gray-900">
+                  Entrada bonificada
+                </div>
+                <div className="text-xs text-gray-600 mt-1">
+                  Cliente não paga a entrada porque ela foi bonificada.
+                </div>
+              </button>
+            </div>
+          </section>
+        )}
+
+        {isComEntrada && (
+          <section className="rounded-2xl border border-gray-200 bg-white p-4">
+            <SectionHeader step="Etapa 3" title="Dados da entrada" />
+
+            <div className="space-y-4">
+              <Input
+                label="Valor da entrada"
+                name="valorEntrada"
+                type="text"
+                inputMode="decimal"
+                value={formData.valorEntrada}
+                onChange={handleChangeEntrada}
+                placeholder={
+                  planoConfig ? String(planoConfig.entradaPadrao) : "0,00"
+                }
+              />
+
+              <div className="flex flex-col gap-1">
+                <label className="text-sm font-bold text-gray-900">
+                  Forma de pagamento da entrada
+                </label>
+                <select
+                  name="formaDePagamentoEntradaNome"
+                  value={formData.formaDePagamentoEntradaNome}
+                  onChange={handleChange}
+                  className="border p-3.5 rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 shadow-sm text-sm"
+                >
+                  <option value="">Selecione...</option>
+                  {OPCOES_ENTRADA.map((opcao) => (
+                    <option key={`entrada-${opcao.value}`} value={opcao.value}>
+                      {opcao.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <Input
+                label="Como a entrada será paga?"
+                name="valorParcela"
+                value={formData.valorParcela}
+                onChange={handleChange}
+                placeholder="Ex: 1x no Pix"
+              />
+            </div>
+
+            {entradaAbaixoDoPadrao && planoConfig && (
+              <div className="mt-4 rounded-2xl border border-orange-200 bg-orange-50 p-4">
+                <div className="text-sm font-bold text-orange-900">
+                  Entrada menor que a padrão
+                </div>
+                <div className="text-xs text-orange-800 mt-1">
+                  Faltam <b>{formatMoney(diferencaAbaixo)}</b>.
                 </div>
 
-                <div className="flex flex-wrap gap-2 mt-3">
+                <div className="space-y-2 mt-4">
                   <button
                     type="button"
                     onClick={() => selecionarModoParcelasPlano(false)}
-                    className={`px-3 py-2 rounded-lg text-sm font-bold border transition ${
+                    className={`w-full rounded-xl px-3 py-3 text-sm font-bold border transition ${
                       !ajustarParcelasPlano
                         ? "bg-orange-500 text-white border-orange-600"
-                        : "bg-white text-orange-900 border-orange-300 hover:bg-orange-100"
+                        : "bg-white text-orange-900 border-orange-300"
                     }`}
                   >
-                    Manter parcelas
+                    Perder parte da entrada
                   </button>
 
                   <button
                     type="button"
                     onClick={() => selecionarModoParcelasPlano(true)}
-                    className={`px-3 py-2 rounded-lg text-sm font-bold border transition ${
+                    className={`w-full rounded-xl px-3 py-3 text-sm font-bold border transition ${
                       ajustarParcelasPlano
                         ? "bg-orange-500 text-white border-orange-600"
-                        : "bg-white text-orange-900 border-orange-300 hover:bg-orange-100"
+                        : "bg-white text-orange-900 border-orange-300"
                     }`}
                   >
-                    Ajustar parcelas
+                    Jogar diferença nas parcelas
                   </button>
                 </div>
 
                 <div className="text-xs text-orange-800 mt-3">
-                  {ajustarParcelasPlano ? (
-                    <>
-                      A diferença de <b>{formatMoney(diferencaAbaixo)}</b> será
-                      adicionada ao saldo e redistribuída nas parcelas.
-                    </>
-                  ) : (
-                    <>
-                      As parcelas permanecerão como estão, com base na tabela
-                      padrão do Plano {planoConfig.nome}.
-                    </>
-                  )}
-                </div>
-
-                <div className="text-xs text-orange-900 mt-2 font-medium">
-                  A entrada foi alterada. Selecione novamente uma opção da
-                  tabela.
+                  {!ajustarParcelasPlano
+                    ? "A diferença da entrada não será recuperada nas parcelas."
+                    : "A diferença da entrada será somada nas parcelas do plano."}
                 </div>
               </div>
             )}
 
             {entradaAcimaDoPadrao && planoConfig && (
-              <div className="bg-red-50 border border-red-300 rounded-lg p-3">
-                <div className="text-sm font-bold text-red-700 mb-1">
-                  Atenção: entrada acima do permitido
+              <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 p-4">
+                <div className="text-sm font-bold text-red-700">
+                  Atenção: entrada acima do padrão
                 </div>
-                <div className="text-sm text-red-700">
-                  O vendedor pegou <b>{formatMoney(diferencaAcima)}</b> a mais
-                  do que a entrada padrão de{" "}
-                  <b>{formatMoney(planoConfig.entradaPadrao)}</b>.
-                </div>
-
-                <div className="text-xs text-red-800 mt-2 font-medium">
-                  A entrada foi alterada. Selecione novamente uma opção da
-                  tabela.
+                <div className="text-xs text-red-700 mt-1">
+                  Foi informado um valor acima da entrada padrão do plano.
                 </div>
               </div>
             )}
-          </div>
+          </section>
+        )}
 
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-gray-900">
-              Forma de Pagamento (Entrada)
-            </label>
-            <select
-              name="formaDePagamentoEntradaNome"
-              value={formData.formaDePagamentoEntradaNome}
-              onChange={handleChange}
-              className="border p-2.5 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 shadow-sm"
-            >
-              <option value="">Selecione...</option>
-              {OPCOES_ENTRADA.map((opcao) => (
-                <option key={`entrada-${opcao.value}`} value={opcao.value}>
-                  {opcao.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="md:col-span-2">
-            <Input
-              label="Detalhes da Entrada"
-              name="valorParcela"
-              value={formData.valorParcela}
-              onChange={handleChange}
-              placeholder="Ex: 1x no Pix..."
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="relative py-4">
-        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-full border-t border-gray-300"></div>
-        </div>
-        <div className="relative flex justify-center">
-          <span className="px-3 bg-white text-sm text-gray-500 font-medium">
-            Saldo Restante / Plano
-          </span>
-        </div>
-      </div>
-
-      <div className="bg-slate-50 p-4 rounded-lg border border-blue-100 mb-6">
-        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wide mb-4 border-b pb-2 border-slate-200">
-          2. Dados do Plano (Saldo)
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-gray-900">
-              Qual o Plano?
-            </label>
-            <select
-              name="tipoContratoNome"
-              value={formData.tipoContratoNome || ""}
-              onChange={(e) => {
-                handleChange(e);
-
-                if (!setFormData) return;
-
-                const novoPlano = e.target.value;
-
-                if (
-                  novoPlano === "Bronze" ||
-                  novoPlano === "Prata" ||
-                  novoPlano === "Ouro" ||
-                  novoPlano === "Diamante"
-                ) {
-                  setFormData((prev: any) => ({
-                    ...prev,
-                    tipoContratoNome: novoPlano,
-                    ajustarParcelasPlano: false,
-                    valorTotalPlano: "",
-                    detalhesParcelamento: "",
-                  }));
-                }
-              }}
-              className="border p-2.5 rounded-lg bg-white outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 shadow-sm"
-              required
-            >
-              <option value="" disabled>
-                Selecione...
-              </option>
-              <option value="Bronze">Bronze</option>
-              <option value="Prata">Prata</option>
-              <option value="Ouro">Ouro</option>
-              <option value="Diamante">Diamante</option>
-            </select>
-          </div>
-
-          <Input
-            label="Valor Total do Plano (R$)"
-            name="valorTotalPlano"
-            type="number"
-            value={formData.valorTotalPlano || ""}
-            onChange={handleChangeValorLimitado}
-            max={10000}
-            required
-            placeholder={planoConfig ? "Selecione na tabela" : "Digite o valor"}
-            className="bg-white text-gray-900"
+        <section className="rounded-2xl border border-gray-200 bg-white p-4">
+          <SectionHeader
+            step={isComEntrada ? "Etapa 4" : "Etapa 4"}
+            title={tituloTabela()}
+            subtitle="Toque na opção desejada."
           />
 
-          {planoConfig && (
-            <div className="md:col-span-2">
+          {resumoOpcaoSelecionada && (
+            <div className="mb-4 rounded-2xl border border-gray-200 bg-gray-50 p-3">
+              <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-gray-500">
+                Selecionado
+              </div>
+              <div className="mt-1 text-sm font-semibold text-gray-900">
+                {resumoOpcaoSelecionada.p}x de{" "}
+                {formatMoney(resumoOpcaoSelecionada.parcelaExibida)}
+              </div>
               <div className="text-xs text-gray-600 mt-1">
-                Plano selecionado: <b>{planoConfig.nome}</b>. Entrada padrão:{" "}
-                <b>{formatMoney(planoConfig.entradaPadrao)}</b>
-                {planoConfig.faturadoBase !== null && (
-                  <>
-                    {" "}
-                    | Faturado base:{" "}
-                    <b>{formatMoney(planoConfig.faturadoBase)}</b> | Total
-                    base: <b>{formatMoney(planoConfig.totalBase)}</b>
-                  </>
-                )}
+                Total do plano:{" "}
+                {formatMoney(resumoOpcaoSelecionada.totalPlanoExibido)}
               </div>
             </div>
           )}
-        </div>
 
-        {planoConfig && (
-          <div
-            className={`border rounded-lg p-4 mb-6 shadow-sm ${planoConfig.cor.cardBg} ${planoConfig.cor.cardBorder}`}
-          >
-            <h3
-              className={`text-xs font-bold mb-2 uppercase tracking-wider ${planoConfig.cor.tituloTabela}`}
-            >
-              Tabela Plano {planoConfig.nome}
-            </h3>
+          <div className="grid grid-cols-2 gap-3 max-h-80 overflow-y-auto pr-1">
+            {planoConfig?.tabela.map((item) => {
+              const opcao = getOpcaoPlanoCalculada(item);
+              const totalOpcao = Number(opcao.totalPlanoExibido).toFixed(2);
+              const isSelected =
+                String(formData.valorTotalPlano || "") === totalOpcao;
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 max-h-52 overflow-y-auto pr-2 custom-scrollbar">
-              {planoConfig.tabela.map((item) => {
-                const opcao = getOpcaoPlanoCalculada(item);
-                const totalOpcao = Number(opcao.totalPlanoExibido).toFixed(2);
-                const isSelected =
-                  String(formData.valorTotalPlano || "") === totalOpcao;
-
-                return (
-                  <button
-                    key={item.p}
-                    type="button"
-                    onClick={() => handleSelecionarOpcaoPlano(item)}
-                    className={`
-                      flex justify-between items-center p-2 rounded text-xs transition-all border
-                      ${isSelected ? planoConfig.cor.ativo : planoConfig.cor.inativo}
-                    `}
-                    title={`Total do Plano: ${formatMoney(
-                      opcao.totalPlanoExibido
-                    )}`}
-                  >
-                    <span
-                      className={`font-semibold ${
-                        isSelected
-                          ? planoConfig.cor.destaque
-                          : planoConfig.cor.titulo
-                      }`}
-                    >
-                      {item.p}x
-                    </span>
-
-                    <span
-                      className={`font-bold ${
-                        isSelected ? "text-white" : "text-gray-800"
-                      }`}
-                    >
-                      {formatMoney(opcao.parcelaExibida)}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="mt-3 text-xs text-gray-600">
-              * Ao clicar, salvamos o <b>Valor Total do Plano</b> conforme a
-              tabela do Plano {planoConfig.nome}.
-              {entradaAbaixoDoPadrao && ajustarParcelasPlano && (
-                <>
-                  {" "}
-                  A diferença da entrada foi somada ao saldo para recalcular as
-                  parcelas.
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-gray-900">
-              Forma de Pagamento (Plano)
-            </label>
-            <select
-              name="formaDePagamentoNome"
-              value={formData.formaDePagamentoNome}
-              onChange={handleChange}
-              required
-              className="border p-2.5 rounded-lg bg-white outline-none focus:ring-2 focus:ring-black-500 text-gray-900 shadow-sm"
-            >
-              <option value="">Selecione...</option>
-              {OPCOES_PLANO.map((opcao) => (
-                <option key={`plano-${opcao.value}`} value={opcao.value}>
-                  {opcao.label}
-                </option>
-              ))}
-            </select>
+              return (
+                <button
+                  key={item.p}
+                  type="button"
+                  onClick={() => handleSelecionarOpcaoPlano(item)}
+                  className={`min-h-[84px] rounded-2xl border p-3 text-left transition active:scale-[0.99] ${
+                    isSelected
+                      ? `${planoConfig.cor.ativo} shadow-sm`
+                      : planoConfig.cor.inativo
+                  }`}
+                  title={`Total do Plano: ${formatMoney(
+                    opcao.totalPlanoExibido
+                  )}`}
+                >
+                  <div className="text-[11px] opacity-80">{item.p}x</div>
+                  <div className="text-sm font-bold mt-1 leading-tight">
+                    {formatMoney(opcao.parcelaExibida)}
+                  </div>
+                  <div className="text-[11px] mt-2 opacity-80">
+                    Total {formatMoney(opcao.totalPlanoExibido)}
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
-          <div className="md:col-span-2">
+          <div className="mt-4">
             <Input
-              label="Detalhes das Parcelas"
+              label="Valor total do plano"
+              name="valorTotalPlano"
+              type="number"
+              value={formData.valorTotalPlano || ""}
+              onChange={handleChange}
+              max={10000}
+              required
+              placeholder="Selecione na tabela"
+              className="bg-white text-gray-900"
+            />
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-gray-200 bg-white p-4">
+          <SectionHeader
+            step={isComEntrada ? "Etapa 5" : "Etapa 5"}
+            title="Pagamento do plano"
+          />
+
+          <div className="space-y-4">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-bold text-gray-900">
+                Forma de pagamento do plano
+              </label>
+              <select
+                name="formaDePagamentoNome"
+                value={formData.formaDePagamentoNome}
+                onChange={handleChange}
+                required
+                className="border p-3.5 rounded-xl bg-white outline-none focus:ring-2 focus:ring-black text-gray-900 shadow-sm text-sm"
+              >
+                <option value="">Selecione...</option>
+                {OPCOES_PLANO.map((opcao) => (
+                  <option key={`plano-${opcao.value}`} value={opcao.value}>
+                    {opcao.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <Input
+              label="Resumo das parcelas"
               name="detalhesParcelamento"
               value={formData.detalhesParcelamento}
               onChange={handleChange}
-              placeholder="Ex: 12x de R$ 392,00 (Coloque a data de início de pagamento)"
+              placeholder="Ex: 12x de R$ 392,00"
             />
           </div>
-        </div>
-      </div>
+        </section>
 
-      <div className="mt-4">
-        <label className="text-sm font-bold text-gray-700">
-          Observações Gerais
-        </label>
-        <textarea
-          name="obsPagamento"
-          value={formData.obsPagamento}
-          onChange={handleChange}
-          rows={3}
-          placeholder="Informações adicionais | data de início de pagamento do Plano"
-          className="border p-3 mt-1 rounded-lg bg-white outline-none focus:ring-2 focus:ring-black-500 w-full text-gray-900"
-        ></textarea>
+        <section className="rounded-2xl border border-gray-200 bg-white p-4">
+          <SectionHeader step="Opcional" title="Observações" />
 
-        {planoConfig && (
-          <div className="text-xs text-gray-600 mt-2">
-            Dica: você pode registrar no Obs que o Plano {planoConfig.nome} tem
-            entrada padrão de <b>{formatMoney(planoConfig.entradaPadrao)}</b>
-            {planoConfig.faturadoBase !== null && (
-              <>
-                {" "}
-                e total base de <b>{formatMoney(planoConfig.totalBase)}</b>.
-              </>
-            )}
-          </div>
-        )}
+          <textarea
+            name="obsPagamento"
+            value={formData.obsPagamento}
+            onChange={handleChange}
+            rows={3}
+            placeholder="Informações adicionais"
+            className="border p-3 rounded-xl bg-white outline-none focus:ring-2 focus:ring-black w-full text-gray-900 text-sm"
+          />
+        </section>
       </div>
     </Card>
   );

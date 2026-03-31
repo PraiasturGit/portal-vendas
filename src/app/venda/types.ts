@@ -3,13 +3,15 @@ export interface VendaFormData {
   numeroContrato: string;
   tipoContratoNome: string;
   valorTotalPlano: string;
-  valorTotal?: string;
   tipoVenda: string;
 
   // --- Regra da negociação ---
   tipoEntrada: "COM_ENTRADA" | "SEM_ENTRADA" | "ISENTA";
   valorSaldo?: string;
   ajustarParcelasPlano?: boolean;
+
+  // --- Tipo envio contrato ---
+  tipoEnvioContrato?: "Digital" | "Manual";
 
   // --- Titular ---
   nomeTitular: string;
@@ -42,13 +44,13 @@ export interface VendaFormData {
   // --- Financeiro ---
   valorEntrada: string;
   formaDePagamentoEntradaNome: string;
-  valorParcela: string; // legado: detalhes da entrada
-  formaDePagamentoNome: string; // pagamento do plano
+  valorParcela: string;
+  formaDePagamentoNome: string;
   detalhesParcelamento: string;
   obsPagamento: string;
 
-  // --- Dependentes / extras dinâmicos ---
-  [key: string]: string | number | boolean | undefined;
+  // --- Dinâmico ---
+  [key: string]: any;
 }
 
 export interface StepProps {

@@ -1,7 +1,6 @@
-// src/app/venda/page.tsx
 "use client";
-
 import Cookies from "js-cookie";
+
 import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/service/api";
@@ -42,6 +41,19 @@ function isFilled(value: unknown) {
   return String(value ?? "").trim() !== "";
 }
 
+function parseMoneyLike(value: unknown) {
+  if (typeof value === "number") return value;
+  if (typeof value !== "string") return 0;
+
+  const cleaned = value
+    .replace(/[R$\s]/g, "")
+    .replace(/\./g, "")
+    .replace(",", ".");
+
+  const parsed = parseFloat(cleaned);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export default function VendaPage() {
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(0);
@@ -53,6 +65,7 @@ export default function VendaPage() {
   const [formData, setFormData] = useState<VendaFormData>({
     tipoVenda: "Presencial",
     tipoContratoNome: "Ouro",
+    tipoEntrada: "COM_ENTRADA",
     numeroContrato: "",
     valorTotalPlano: "",
     nomeTitular: "",
@@ -117,27 +130,6 @@ export default function VendaPage() {
   };
 
   const validarStepAtual = () => {
-    // STEP 0 - CONTRATO
-    if (currentStep === 0) {
-      if (!isFilled(formData.tipoVenda)) {
-        toast.error("Selecione a modalidade da venda.");
-        return false;
-      }
-
-      const isPresencial =
-        String(formData.tipoVenda || "").trim().toLowerCase() === "presencial";
-
-      const isManual =
-        String((formData as any).tipoEnvioContrato || "")
-          .trim()
-          .toLowerCase() === "manual";
-
-      if (isPresencial && isManual && !isFilled(formData.numeroContrato)) {
-        toast.error("Preencha o número do contrato para venda presencial.");
-        return false;
-      }
-    }
-
     // STEP 1 - TITULAR
     if (currentStep === 1) {
       if (!isFilled(formData.nomeTitular)) {
@@ -211,6 +203,21 @@ export default function VendaPage() {
         return false;
       }
 
+      const tipoEntrada = String(formData.tipoEntrada || "COM_ENTRADA").toUpperCase();
+      const valorEntrada = parseMoneyLike(formData.valorEntrada);
+
+      if (tipoEntrada === "COM_ENTRADA") {
+        if (!isFilled(formData.valorEntrada) || !Number.isFinite(valorEntrada) || valorEntrada <= 0) {
+          toast.error("Informe uma entrada maior que zero.");
+          return false;
+        }
+
+        if (!isFilled(formData.formaDePagamentoEntradaNome)) {
+          toast.error("Selecione a forma de pagamento da entrada.");
+          return false;
+        }
+      }
+
       if (!isFilled(formData.valorTotalPlano)) {
         toast.error("Selecione uma opção na tabela do plano.");
         return false;
@@ -248,26 +255,9 @@ export default function VendaPage() {
         return;
       }
 
-      const tipoVendaNormalizado = String(formData.tipoVenda || "")
-        .trim()
-        .toLowerCase();
-
-      const tipoEnvioNormalizado = String((formData as any).tipoEnvioContrato || "")
-        .trim()
-        .toLowerCase();
-
-      if (
-        tipoVendaNormalizado === "presencial" &&
-        tipoEnvioNormalizado === "manual" &&
-        !isFilled(formData.numeroContrato)
-      ) {
-        toast.error("Número do contrato é obrigatório para venda presencial.");
-        return;
-      }
-
       const payload: any = {
         ...formData,
-        numeroContrato: formData.numeroContrato || "",
+        numeroContrato: "",
         gerarContrato,
         requestId: requestIdRef.current,
       };

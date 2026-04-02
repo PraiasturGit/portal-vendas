@@ -130,6 +130,22 @@ export default function VendaPage() {
   };
 
   const validarStepAtual = () => {
+    // STEP 0 - CONTRATO
+    if (currentStep === 0) {
+      const isDigital = formData.tipoEnvioContrato === "Digital";
+      const tipoVenda = String(formData.tipoVenda || "").trim().toLowerCase();
+
+      if (!isDigital && tipoVenda === "presencial" && !isFilled(formData.numeroContrato)) {
+        toast.error("Preencha o número do contrato para venda presencial.");
+        return false;
+      }
+
+      if (!isFilled(formData.tipoVenda)) {
+        toast.error("Selecione a modalidade da venda.");
+        return false;
+      }
+    }
+
     // STEP 1 - TITULAR
     if (currentStep === 1) {
       if (!isFilled(formData.nomeTitular)) {
@@ -257,7 +273,7 @@ export default function VendaPage() {
 
       const payload: any = {
         ...formData,
-        numeroContrato: "",
+        numeroContrato: formData.numeroContrato || "",
         gerarContrato,
         requestId: requestIdRef.current,
       };

@@ -198,7 +198,7 @@ export default function AnalyticsPage() {
   const mixedChartMeta = useMemo(() => {
     if (!mensalVendasConvites.length) {
       return {
-        vendasBars: [] as Array<{
+        convitesBars: [] as Array<{
           x: number;
           y: number;
           width: number;
@@ -206,13 +206,13 @@ export default function AnalyticsPage() {
           valor: number;
           label: string;
         }>,
-        convitesDots: [] as Array<{
+        vendasDots: [] as Array<{
           x: number;
           y: number;
           valor: number;
           label: string;
         }>,
-        convitesLine: "",
+        vendasLine: "",
         monthGuides: [] as Array<{ x: number; label: string }>,
       };
     }
@@ -234,27 +234,27 @@ export default function AnalyticsPage() {
 
     const barWidth = Math.min(14, stepX * 0.42);
 
-    const vendasBars = mensalVendasConvites.map((item, idx) => {
+    const convitesBars = mensalVendasConvites.map((item, idx) => {
       const centerX = paddingX + idx * stepX;
-      const y = toY(item.vendas);
+      const y = toY(item.convites);
       return {
         x: centerX - barWidth / 2,
         y,
         width: barWidth,
         height: baseY - y,
-        valor: item.vendas,
+        valor: item.convites,
         label: item.label,
       };
     });
 
-    const convitesDots = mensalVendasConvites.map((item, idx) => ({
+    const vendasDots = mensalVendasConvites.map((item, idx) => ({
       x: paddingX + idx * stepX,
-      y: toY(item.convites),
-      valor: item.convites,
+      y: toY(item.vendas),
+      valor: item.vendas,
       label: item.label,
     }));
 
-    const convitesLine = convitesDots.map((p) => `${p.x},${p.y}`).join(" ");
+    const vendasLine = vendasDots.map((p) => `${p.x},${p.y}`).join(" ");
 
     const monthGuides = mensalVendasConvites.map((item, idx) => ({
       x: paddingX + idx * stepX,
@@ -262,9 +262,9 @@ export default function AnalyticsPage() {
     }));
 
     return {
-      vendasBars,
-      convitesDots,
-      convitesLine,
+      convitesBars,
+      vendasDots,
+      vendasLine,
       monthGuides,
     };
   }, [mensalVendasConvites, maxMensal]);
@@ -865,7 +865,7 @@ export default function AnalyticsPage() {
                         </h3>
                       </div>
                       <p className="mt-1 text-sm text-gray-500">
-                        Barras para vendas e linha para convites entregues.
+                        Barras para convites entregues e linha para vendas.
                       </p>
                     </div>
 
@@ -883,13 +883,13 @@ export default function AnalyticsPage() {
                       <div className="rounded-2xl border border-gray-100 bg-gradient-to-b from-white to-gray-50 p-5">
                         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
                           <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
-                            <div className="flex items-center gap-2 text-blue-600">
-                              <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-500" />
-                              Vendas
-                            </div>
                             <div className="flex items-center gap-2 text-purple-600">
                               <span className="inline-block h-2.5 w-2.5 rounded-full bg-purple-500" />
                               Convites entregues
+                            </div>
+                            <div className="flex items-center gap-2 text-blue-600">
+                              <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-500" />
+                              Vendas
                             </div>
                           </div>
 
@@ -914,7 +914,7 @@ export default function AnalyticsPage() {
                             >
                               <defs>
                                 <linearGradient
-                                  id="barsGradient"
+                                  id="purpleBarsGradient"
                                   x1="0"
                                   y1="0"
                                   x2="0"
@@ -922,18 +922,18 @@ export default function AnalyticsPage() {
                                 >
                                   <stop
                                     offset="0%"
-                                    stopColor="#3b82f6"
+                                    stopColor="#8b5cf6"
                                     stopOpacity="0.95"
                                   />
                                   <stop
                                     offset="100%"
-                                    stopColor="#60a5fa"
+                                    stopColor="#a78bfa"
                                     stopOpacity="0.78"
                                   />
                                 </linearGradient>
 
                                 <filter
-                                  id="barShadow"
+                                  id="purpleBarShadow"
                                   x="-20%"
                                   y="-20%"
                                   width="140%"
@@ -943,7 +943,7 @@ export default function AnalyticsPage() {
                                     dx="0"
                                     dy="1.2"
                                     stdDeviation="1.4"
-                                    floodColor="#3b82f6"
+                                    floodColor="#8b5cf6"
                                     floodOpacity="0.18"
                                   />
                                 </filter>
@@ -974,7 +974,7 @@ export default function AnalyticsPage() {
                                 />
                               ))}
 
-                              {mixedChartMeta.vendasBars.map((bar, idx) => (
+                              {mixedChartMeta.convitesBars.map((bar, idx) => (
                                 <rect
                                   key={`bar-${idx}`}
                                   x={bar.x}
@@ -982,27 +982,27 @@ export default function AnalyticsPage() {
                                   width={bar.width}
                                   height={bar.height}
                                   rx="2.4"
-                                  fill="url(#barsGradient)"
-                                  filter="url(#barShadow)"
+                                  fill="url(#purpleBarsGradient)"
+                                  filter="url(#purpleBarShadow)"
                                 />
                               ))}
 
                               <polyline
                                 fill="none"
-                                stroke="#8b5cf6"
+                                stroke="#3b82f6"
                                 strokeWidth="2.6"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                points={mixedChartMeta.convitesLine}
+                                points={mixedChartMeta.vendasLine}
                               />
 
-                              {mixedChartMeta.convitesDots.map((point, idx) => (
-                                <g key={`convite-${idx}`}>
+                              {mixedChartMeta.vendasDots.map((point, idx) => (
+                                <g key={`venda-${idx}`}>
                                   <circle
                                     cx={point.x}
                                     cy={point.y}
                                     r="2.7"
-                                    fill="#8b5cf6"
+                                    fill="#3b82f6"
                                     stroke="white"
                                     strokeWidth="1.1"
                                   />

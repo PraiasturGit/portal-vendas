@@ -2,14 +2,17 @@ import { useState, useEffect, useCallback } from "react";
 import api from "@/service/api";
 import { useAuth } from "@/context/AuthContext";
 
+type AnalyticsTab = "vendas" | "convites" | "vendas-convites";
+
 interface FiltrosState {
   mes: number;
   ano: number;
   tipo_venda: string;
   id_vendedor: string;
-  data_inicial?: string; // Opcional
-  data_final?: string; // Opcional
+  data_inicial?: string;
+  data_final?: string;
 }
+
 export function useAnalytics() {
   const { user } = useAuth();
 
@@ -21,7 +24,7 @@ export function useAnalytics() {
 
   // Estados de UI
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"vendas" | "convites">("vendas");
+  const [activeTab, setActiveTab] = useState<AnalyticsTab>("vendas");
 
   // Filtros
   const [selectedSupervisor, setSelectedSupervisor] = useState("");
@@ -32,37 +35,34 @@ export function useAnalytics() {
     id_vendedor: "TODOS",
   });
 
-  // --- ACTIONS ---
-
   const carregarListaVendedores = useCallback(async (supId?: string) => {
     try {
       const params = { params: { supervisor_id: supId } };
-      // Ajuste a rota conforme seu backend
       const res = await api.get("/api/dashboard/vendedores-lista", params);
-      setListaVendedores(res.data);
+      setListaVendedores(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
       console.error("Erro ao buscar vendedores", error);
+      setListaVendedores([]);
     }
   }, []);
 
   const carregarSupervisores = useCallback(async () => {
     try {
       const res = await api.get("/api/dashboard/supervisores");
-      setSupervisores(res.data);
+      setSupervisores(Array.isArray(res.data) ? res.data : []);
     } catch (error) {
       console.error("Erro supervisores", error);
+      setSupervisores([]);
     }
   }, []);
 
   const carregarDados = useCallback(async () => {
     setLoading(true);
     try {
-      // Lógica de privilégio: Se Admin selecionou supervisor, usa ele. Se não, usa o próprio user.
       const supId =
         selectedSupervisor ||
-        (user?.role === "SUPERVISOR" ? user.id : undefined); // Dica: verifique se é user.id ou user.sub no seu AuthContext
+        (user?.role === "SUPERVISOR" ? String(user.id) : undefined);
 
-      // MUDANÇA AQUI: Criamos um objeto base e adicionamos datas se existirem
       const requestParams: any = {
         supervisor_id: supId,
         mes: filtros.mes,
@@ -71,10 +71,13 @@ export function useAnalytics() {
         id_vendedor_filtro: filtros.id_vendedor,
       };
 
-      // Se o usuário preencheu datas no filtro, enviamos junto!
-      if (filtros.data_inicial)
+      if (filtros.data_inicial) {
         requestParams.data_inicial = filtros.data_inicial;
-      if (filtros.data_final) requestParams.data_final = filtros.data_final;
+      }
+
+      if (filtros.data_final) {
+        requestParams.data_final = filtros.data_final;
+      }
 
       console.log("🔍 [FRONT] Enviando params:", requestParams);
 
@@ -83,17 +86,17 @@ export function useAnalytics() {
         api.get("/api/dashboard/vendas", { params: requestParams }),
       ]);
 
-      setMetricas(resMetricas.data);
-      setHistoricoVendas(resHist.data);
+      setMetricas(resMetricas.data || null);
+      setHistoricoVendas(Array.isArray(resHist.data) ? resHist.data : []);
     } catch (error) {
       console.error("Erro dashboard", error);
+      setMetricas(null);
+      setHistoricoVendas([]);
     } finally {
       setLoading(false);
     }
   }, [filtros, selectedSupervisor, user]);
-  // --- EFEITOS ---
 
-  // 1. Inicialização
   useEffect(() => {
     if (user?.role === "ADMIN") {
       carregarSupervisores();
@@ -102,7 +105,6 @@ export function useAnalytics() {
     }
   }, [user, carregarSupervisores, carregarListaVendedores]);
 
-  // 2. Quando Admin troca supervisor
   useEffect(() => {
     if (selectedSupervisor) {
       carregarListaVendedores(selectedSupervisor);
@@ -110,23 +112,21 @@ export function useAnalytics() {
     }
   }, [selectedSupervisor, carregarListaVendedores]);
 
-  // 3. Atualização de dados (reage a filtros, user ou supervisor)
   useEffect(() => {
-    if (user) carregarDados();
-  }, [carregarDados]);
+    if (user) {
+      carregarDados();
+    }
+  }, [carregarDados, user]);
 
   return {
     user,
-    // Dados
     metricas,
     historicoVendas,
     listaVendedores,
     supervisores,
-    // UI States
     loading,
     activeTab,
     setActiveTab,
-    // Filtros
     filtros,
     setFiltros,
     selectedSupervisor,

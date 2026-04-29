@@ -51,6 +51,9 @@ export interface VendaFormData {
 
   // --- Dinâmico ---
   [key: string]: any;
+
+  // --- Evento ---
+  evento?: string;
 }
 
 export interface StepProps {

@@ -644,6 +644,7 @@ export default function AnalyticsPage() {
                         <th className="p-4">Tipo</th>
                         <th className="p-4">Valor</th>
                         <th className="p-4">Status</th>
+                        <th className="p-4">Evento</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
@@ -669,6 +670,9 @@ export default function AnalyticsPage() {
                             </td>
                             <td className="p-4">
                               <BadgeStatus status={venda.status} />
+                            </td>
+                            <td className="p-4 text-xs font-bold uppercase text-gray-600">
+                              {venda.evento || "-"}
                             </td>
                           </tr>
                         ))}

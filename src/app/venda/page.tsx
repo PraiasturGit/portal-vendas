@@ -120,6 +120,9 @@ export default function VendaPage() {
     valorParcela: "",
     detalhesParcelamento: "",
     obsPagamento: "",
+
+    // Evento
+    evento: "",
   });
 
   const handleChange = (

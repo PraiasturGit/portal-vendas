@@ -95,6 +95,16 @@ export function StepContrato({ formData, handleChange, setFormData }: StepProps)
               <option value="Presencial">Presencial</option>
             </select>
           </div>
+
+          <Input
+            label="Evento"
+            name="evento"
+            value={formData.evento || ""}
+            onChange={handleChange}
+            required
+            placeholder="Digite o nome do evento"
+            className="col-span-1 md:col-span-2"
+          />
         </div>
 
         {/* ✅ Informação clara pro usuário */}

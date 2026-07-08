@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Users,
   LayoutDashboard, // Ícone novo
+  FileWarning
 } from "lucide-react";
 import Link from "next/link";
 
@@ -76,6 +77,21 @@ export default function DashboardPage() {
                         Vendedores
                       </h3>
                       <p className="text-sm text-orange-700">Vincular equipe</p>
+                    </div>
+                  </div>
+                </Link>
+
+              )}
+              {/* BOTÃO DO ADMIN -> CONTRATOS */}
+              {user?.role === "ADMIN" && (
+                <Link href="/admin/contratos" className="group">
+                  <div className="bg-red-50 p-6 rounded-xl border border-red-100 hover:border-red-300 hover:shadow-md transition-all flex items-center gap-4 cursor-pointer h-full">
+                    <div className="bg-white p-4 rounded-full shadow-sm group-hover:scale-110 transition-transform">
+                      <FileWarning className="h-8 w-8 text-red-600" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-red-900 text-lg">Contratos</h3>
+                      <p className="text-sm text-red-700">Exclusão lógica</p>
                     </div>
                   </div>
                 </Link>

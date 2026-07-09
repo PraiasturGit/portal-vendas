@@ -17,7 +17,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-
+const CORTESIA_EM_MANUTENCAO = true;
 type FormState = {
   nomeGanhador: string;
   cpf: string;
@@ -305,6 +305,44 @@ function PickerField({
 
 export default function ConviteCortesiaPage() {
   const router = useRouter();
+
+  if (CORTESIA_EM_MANUTENCAO) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+      <div className="max-w-md w-full bg-white rounded-[28px] shadow-xl border border-orange-100 p-8 text-center">
+        <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-orange-50">
+          <span className="text-4xl">🛠️</span>
+        </div>
+
+        <h1 className="text-2xl font-bold text-gray-900 mb-3">
+          Cortesia Especial em manutenção
+        </h1>
+
+        <p className="text-sm text-gray-600 leading-relaxed mb-6">
+          A geração de convites gratuitos está temporariamente indisponível
+          para ajustes internos. As demais funções do portal seguem funcionando
+          normalmente.
+        </p>
+
+        <div className="rounded-2xl border border-orange-100 bg-orange-50 px-4 py-3 text-sm font-medium text-orange-800 mb-6">
+          Previsão de retorno: em breve.
+        </div>
+
+        <button
+          type="button"
+          onClick={() => router.push("/dashboard")}
+          className="w-full rounded-2xl bg-orange-500 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600"
+        >
+          Voltar para o Dashboard
+        </button>
+
+        <p className="mt-5 text-xs text-gray-400">
+          Praiastur Clube de Turismo
+        </p>
+      </div>
+    </div>
+  );
+}
 
   const [loading, setLoading] = useState(false);
   const [loadingCidades, setLoadingCidades] = useState(false);

@@ -182,7 +182,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Cortesia Especial */}
-          {/* <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-orange-200 transition-all duration-300 h-full flex flex-col items-center text-center relative overflow-hidden group">
+          <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-orange-200 transition-all duration-300 h-full flex flex-col items-center text-center relative overflow-hidden group">
             <div className="absolute top-0 left-0 w-full h-1 bg-orange-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></div>
 
             <div className="w-20 h-20 bg-orange-50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-inner">
@@ -205,10 +205,10 @@ export default function DashboardPage() {
                 Gerar Cortesia
               </Link>
             </div>
-          </div> */}
+          </div>
 
           {/* Cortesia Especial - Manutenção */}
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-orange-100 h-full flex flex-col items-center text-center relative overflow-hidden group opacity-90">
+          {/* <div className="bg-white p-8 rounded-2xl shadow-sm border border-orange-100 h-full flex flex-col items-center text-center relative overflow-hidden group opacity-90">
             <div className="absolute top-0 left-0 w-full h-1 bg-orange-400"></div>
 
             <div className="absolute right-4 top-4 rounded-full bg-orange-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-orange-700">
@@ -235,7 +235,7 @@ export default function DashboardPage() {
                 Ver aviso
               </Link>
             </div>
-          </div>
+          </div> */}
         </div>
       </main>
 

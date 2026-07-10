@@ -17,7 +17,7 @@ import {
   Search,
   X,
 } from "lucide-react";
-const CORTESIA_EM_MANUTENCAO = true;
+const CORTESIA_EM_MANUTENCAO = false;
 type FormState = {
   nomeGanhador: string;
   cpf: string;

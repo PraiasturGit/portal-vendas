@@ -13,22 +13,22 @@ import {
 } from "lucide-react";
 
 type Contrato = {
+  origem?: string;
   id: number;
-  nome_projeto: string;
-  vendedor_id: number;
-  id_vendedor_omie?: number;
-  id_financeiro?: number;
-  data_venda?: string;
+  numero_contrato: string;
   valor_total?: string | number;
-  valor_entrada?: string | number;
-  metodo_pagamento_entrada?: string;
-  metodo_pagamento_restante?: string;
-  percentual_comissao?: string | number;
-  ncodos_omie?: number;
-  created_at?: string;
+  forma_pagamento?: string;
+  forma_pagamento_entrada?: string;
+  tipo_venda?: string;
   status?: string;
-  updated_at?: string;
-  quantidade_parcelas?: number;
+  status_contrato?: string;
+  data_venda?: string;
+  id_vendedor?: number;
+  cargo_vendedor?: string;
+  id_agencia?: number;
+  vendedor?: string;
+  supervisor?: string;
+  total_parcelas?: number | null;
 };
 
 function formatarMoeda(valor?: string | number) {
@@ -113,7 +113,7 @@ export default function AdminContratosPage() {
   }
 
   async function excluirContrato() {
-    if (!contrato?.nome_projeto) {
+    if (!contrato?.numero_contrato) {
       setErro("Busque um contrato antes de excluir.");
       return;
     }
@@ -124,7 +124,7 @@ export default function AdminContratosPage() {
     }
 
     const confirmou = window.confirm(
-      `Tem certeza que deseja marcar o contrato ${contrato.nome_projeto} como EXCLUIDO?`
+      `Tem certeza que deseja marcar o contrato ${contrato.numero_contrato} como EXCLUIDO?`
     );
 
     if (!confirmou) return;
@@ -135,7 +135,7 @@ export default function AdminContratosPage() {
 
     try {
       const response = await api.delete(
-        `/api/admin/contratos/${contrato.nome_projeto}`
+        `/api/admin/contratos/${contrato.numero_contrato}`
       );
 
       if (!response.data?.success) {
@@ -177,7 +177,8 @@ export default function AdminContratosPage() {
   }
 
   const contratoExcluido =
-    String(contrato?.status || "").toUpperCase() === "EXCLUIDO";
+    String(contrato?.status || "").toUpperCase() === "EXCLUIDO" ||
+    String(contrato?.status_contrato || "").toUpperCase() === "EXCLUIDO";
 
   return (
     <div className="min-h-screen bg-gray-50 px-4 py-8 font-sans">
@@ -195,8 +196,8 @@ export default function AdminContratosPage() {
             Exclusão de Contratos
           </h1>
           <p className="mt-2 text-gray-500">
-            Busque um contrato e confirme a exclusão lógica. Nenhum registro
-            será apagado fisicamente do banco.
+            Busque um contrato do Painel de Vendas e confirme a exclusão lógica.
+            Nenhum registro será apagado fisicamente do banco.
           </p>
         </div>
 
@@ -214,7 +215,7 @@ export default function AdminContratosPage() {
                 onKeyDown={(e) => {
                   if (e.key === "Enter") buscarContrato();
                 }}
-                placeholder="Ex: 59279P"
+                placeholder="Ex: 1027G"
                 className="h-12 w-full rounded-xl border border-gray-200 px-4 text-gray-900 outline-none focus:border-orange-500 focus:ring-4 focus:ring-orange-100"
                 disabled={loading}
               />
@@ -264,8 +265,14 @@ export default function AdminContratosPage() {
               </div>
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-                <Info label="Contrato" value={contrato.nome_projeto} />
+                <Info label="Origem" value="Painel de Vendas" />
+                <Info label="Contrato" value={contrato.numero_contrato} />
                 <Info label="Status" value={contrato.status || "-"} />
+                <Info
+                  label="Status contrato"
+                  value={contrato.status_contrato || "-"}
+                />
+
                 <Info
                   label="Data da venda"
                   value={formatarData(contrato.data_venda)}
@@ -275,20 +282,31 @@ export default function AdminContratosPage() {
                   value={formatarMoeda(contrato.valor_total)}
                 />
                 <Info
-                  label="Valor entrada"
-                  value={formatarMoeda(contrato.valor_entrada)}
+                  label="Forma pagamento"
+                  value={contrato.forma_pagamento || "-"}
+                />
+                <Info
+                  label="Entrada"
+                  value={contrato.forma_pagamento_entrada || "-"}
+                />
+
+                <Info label="Tipo venda" value={contrato.tipo_venda || "-"} />
+                <Info
+                  label="Vendedor"
+                  value={contrato.vendedor || String(contrato.id_vendedor || "-")}
+                />
+                <Info
+                  label="Cargo"
+                  value={contrato.cargo_vendedor || "-"}
                 />
                 <Info
                   label="Parcelas"
-                  value={String(contrato.quantidade_parcelas ?? "-")}
-                />
-                <Info
-                  label="Vendedor ID"
-                  value={String(contrato.vendedor_id || "-")}
-                />
-                <Info
-                  label="OS Omie"
-                  value={String(contrato.ncodos_omie || "-")}
+                  value={
+                    contrato.total_parcelas === null ||
+                    contrato.total_parcelas === undefined
+                      ? "-"
+                      : String(contrato.total_parcelas)
+                  }
                 />
               </div>
 

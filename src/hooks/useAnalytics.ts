@@ -2,7 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 import api from "@/service/api";
 import { useAuth } from "@/context/AuthContext";
 
-type AnalyticsTab = "vendas" | "convites" | "vendas-convites";
+type AnalyticsTab =
+  | "vendas"
+  | "convites"
+  | "cortesias"
+  | "vendas-convites";
 
 interface FiltrosState {
   mes: number;

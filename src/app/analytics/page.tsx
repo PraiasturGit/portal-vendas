@@ -19,6 +19,8 @@ import {
   Percent,
   BarChart3,
   Trophy,
+  Gift,
+  MailCheck,
 } from "lucide-react";
 
 import { useAnalytics } from "@/hooks/useAnalytics";
@@ -30,6 +32,8 @@ type MesLinha = {
   label: string;
   vendas: number;
   convites: number;
+  convitesNormais?: number;
+  cortesias?: number;
   valor: number;
 };
 
@@ -57,7 +61,7 @@ export default function AnalyticsPage() {
 
   const [modoVisualizacao, setModoVisualizacao] = useState<
     "resumido" | "completo"
-  >("resumido");
+  >("completo");
 
   const formatMoney = (val: number) =>
     new Intl.NumberFormat("pt-BR", {
@@ -81,6 +85,16 @@ export default function AnalyticsPage() {
 
   const listaConvitesTodos = Array.isArray(metricas?.listaDetalhadaConvites)
     ? metricas.listaDetalhadaConvites
+    : [];
+
+  const listaCortesias = Array.isArray(metricas?.cortesiasEspeciais?.lista)
+    ? metricas.cortesiasEspeciais.lista
+    : [];
+
+  const rankingCortesias = Array.isArray(
+    metricas?.cortesiasEspeciais?.ranking
+  )
+    ? metricas.cortesiasEspeciais.ranking
     : [];
 
   const historicoVendasFiltrado = useMemo(() => {
@@ -116,7 +130,9 @@ export default function AnalyticsPage() {
   }, [listaConvitesTodos, vendedorFiltroAtivo]);
 
   const totalVendas = historicoVendasFiltrado.length;
-  const totalConvites = listaConvitesFiltrada.length;
+  const totalConvitesNormais = listaConvitesFiltrada.length;
+  const totalCortesias = Number(metricas?.cortesiasEspeciais?.total || 0);
+  const totalConvites = totalConvitesNormais + totalCortesias;
   const valorTotalVendido = historicoVendasFiltrado.reduce(
     (acc: number, item: any) => acc + Number(item?.valor_total || 0),
     0
@@ -416,10 +432,23 @@ export default function AnalyticsPage() {
           item.qtd,
         ]);
       } else {
-        head = [["Data/Hora", "Vendedor", "Evento", "Status"]];
+        head = [
+          [
+            "Data/Hora",
+            "Cliente",
+            "Nº Convite",
+            "Telefone",
+            "Vendedor",
+            "Evento",
+            "Status",
+          ],
+        ];
         body =
           listaConvitesFiltrada.map((convite: any) => [
             new Date(convite.dataCriacao).toLocaleString("pt-BR"),
+            convite.nomeCliente || "-",
+            convite.numeroConvite || "-",
+            convite.telefoneCliente || "-",
             convite.vendedor,
             convite.evento || "-",
             "ENTREGUE",
@@ -436,6 +465,38 @@ export default function AnalyticsPage() {
       });
 
       doc.save(`Convites_${nomeArquivoSafe}_${dataHoje}.pdf`);
+    } else if (activeTab === "cortesias") {
+      doc.setFontSize(14);
+      doc.setFont("helvetica", "bold");
+      doc.text("Relatório de Cortesias Especiais", 14, cursorY);
+      cursorY += 8;
+
+      autoTable(doc, {
+        startY: cursorY,
+        head: [
+          [
+            "Data",
+            "Número",
+            "Cliente",
+            "Vendedor",
+            "Cidade/UF",
+            "Status",
+          ],
+        ],
+        body: listaCortesias.map((cortesia: any) => [
+          new Date(cortesia.data_cadastro).toLocaleString("pt-BR"),
+          cortesia.numero_convite,
+          cortesia.nome_cliente,
+          cortesia.vendedor,
+          `${cortesia.cidade || "-"}/${cortesia.estado || "-"}`,
+          cortesia.status,
+        ]),
+        theme: "grid",
+        headStyles: { fillColor: [234, 88, 12] },
+        styles: { fontSize: 8 },
+      });
+
+      doc.save(`Cortesias_${nomeArquivoSafe}_${dataHoje}.pdf`);
     } else if (activeTab === "vendas-convites") {
       doc.setFontSize(14);
       doc.setFont("helvetica", "bold");
@@ -573,6 +634,17 @@ export default function AnalyticsPage() {
           }`}
         >
           <Ticket size={18} /> Convites
+        </button>
+
+        <button
+          onClick={() => setActiveTab("cortesias")}
+          className={`flex items-center gap-2 px-1 pb-3 text-sm font-bold transition-colors ${
+            activeTab === "cortesias"
+              ? "border-b-2 border-orange-600 text-orange-600"
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+        >
+          <Gift size={18} /> Cortesias Especiais
         </button>
 
         <button
@@ -752,6 +824,9 @@ export default function AnalyticsPage() {
                         ) : (
                           <>
                             <th className="p-4">Hora/Data</th>
+                            <th className="p-4">Cliente</th>
+                            <th className="p-4">Nº Convite</th>
+                            <th className="p-4">Telefone</th>
                             <th className="p-4">Vendedor</th>
                             <th className="p-4">Evento</th>
                             <th className="p-4 text-right">Status</th>
@@ -790,6 +865,15 @@ export default function AnalyticsPage() {
                                 "pt-BR"
                               )}
                             </td>
+                            <td className="p-4 font-medium text-gray-800">
+                              {convite.nomeCliente || "-"}
+                            </td>
+                            <td className="whitespace-nowrap p-4 font-bold text-purple-600">
+                              {convite.numeroConvite || "-"}
+                            </td>
+                            <td className="whitespace-nowrap p-4 text-gray-600">
+                              {convite.telefoneCliente || "-"}
+                            </td>
                             <td className="p-4 font-medium text-purple-600">
                               {convite.vendedor}
                             </td>
@@ -811,7 +895,7 @@ export default function AnalyticsPage() {
                             listaConvitesFiltrada.length === 0))) && (
                         <tr>
                           <td
-                            colSpan={4}
+                            colSpan={7}
                             className="p-8 text-center text-gray-400"
                           >
                             Nenhum convite encontrado.
@@ -820,6 +904,136 @@ export default function AnalyticsPage() {
                       )}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activeTab === "cortesias" && (
+            <div className="animate-fade-in space-y-6">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <CardKPI
+                  title="Total de Cortesias"
+                  value={metricas.cortesiasEspeciais?.total || 0}
+                  subtitle="No período selecionado"
+                  icon={<Gift className="text-orange-600" />}
+                  color="orange"
+                />
+                <CardKPI
+                  title="Cortesias Hoje"
+                  value={metricas.cortesiasEspeciais?.hoje || 0}
+                  subtitle="Cadastradas hoje"
+                  icon={<Calendar className="text-pink-600" />}
+                  color="pink"
+                />
+                <CardKPI
+                  title="E-mails Enviados"
+                  value={
+                    listaCortesias.filter(
+                      (cortesia: any) => cortesia.email_enviado
+                    ).length
+                  }
+                  subtitle="Entregas confirmadas"
+                  icon={<MailCheck className="text-green-600" />}
+                  color="green"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+                <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm xl:col-span-2">
+                  <div className="flex items-center justify-between border-b border-gray-50 p-6">
+                    <h3 className="text-lg font-bold text-gray-800">
+                      Histórico de Cortesias Especiais
+                    </h3>
+                    <span className="rounded bg-orange-100 px-2 py-1 text-xs font-medium text-orange-700">
+                      {listaCortesias.length} registros
+                    </span>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-gray-50 font-semibold uppercase text-gray-500">
+                        <tr>
+                          <th className="p-4">Data</th>
+                          <th className="p-4">Número</th>
+                          <th className="p-4">Cliente</th>
+                          <th className="p-4">Vendedor</th>
+                          <th className="p-4">Cidade/UF</th>
+                          <th className="p-4 text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {listaCortesias.map((cortesia: any) => (
+                          <tr key={cortesia.id} className="hover:bg-gray-50">
+                            <td className="whitespace-nowrap p-4 text-gray-500">
+                              {new Date(
+                                cortesia.data_cadastro
+                              ).toLocaleString("pt-BR")}
+                            </td>
+                            <td className="p-4 font-bold text-orange-600">
+                              {cortesia.numero_convite}
+                            </td>
+                            <td className="p-4">
+                              <div className="font-medium text-gray-800">
+                                {cortesia.nome_cliente}
+                              </div>
+                              <div className="text-xs text-gray-400">
+                                {cortesia.email}
+                              </div>
+                            </td>
+                            <td className="p-4 font-medium text-gray-700">
+                              {cortesia.vendedor}
+                            </td>
+                            <td className="whitespace-nowrap p-4 text-gray-600">
+                              {cortesia.cidade || "-"}/{cortesia.estado || "-"}
+                            </td>
+                            <td className="p-4 text-right">
+                              <BadgeStatus status={cortesia.status} />
+                            </td>
+                          </tr>
+                        ))}
+                        {listaCortesias.length === 0 && (
+                          <tr>
+                            <td
+                              colSpan={6}
+                              className="p-8 text-center text-gray-400"
+                            >
+                              Nenhuma cortesia encontrada neste período.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                  <h3 className="mb-4 flex items-center gap-2 text-lg font-bold text-gray-800">
+                    <Trophy className="text-orange-500" size={20} />
+                    Ranking de Cortesias
+                  </h3>
+                  <div className="space-y-3">
+                    {rankingCortesias.map((item: any, index: number) => (
+                      <div
+                        key={item.nome_completo}
+                        className="flex items-center justify-between rounded-lg bg-orange-50 p-3"
+                      >
+                        <div className="min-w-0">
+                          <div className="truncate font-semibold text-gray-800">
+                            {index + 1}. {item.nome_completo}
+                          </div>
+                        </div>
+                        <span className="ml-3 inline-flex h-9 min-w-9 items-center justify-center rounded-full bg-orange-600 px-2 font-bold text-white">
+                          {item.cortesias}
+                        </span>
+                      </div>
+                    ))}
+                    {rankingCortesias.length === 0 && (
+                      <div className="py-8 text-center text-sm text-gray-400">
+                        Nenhuma cortesia registrada.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -889,7 +1103,7 @@ export default function AnalyticsPage() {
                           <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
                             <div className="flex items-center gap-2 text-purple-600">
                               <span className="inline-block h-2.5 w-2.5 rounded-full bg-purple-500" />
-                              Convites entregues
+                            Convites + cortesias
                             </div>
                             <div className="flex items-center gap-2 text-blue-600">
                               <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-500" />
@@ -1048,9 +1262,21 @@ export default function AnalyticsPage() {
 
                               <div className="space-y-2 text-sm text-gray-600">
                                 <div className="flex items-center justify-between">
-                                  <span>Convites</span>
+                                  <span>Total de convites</span>
                                   <span className="font-bold text-purple-600">
                                     {item.convites}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs">
+                                  <span>Convites normais</span>
+                                  <span className="font-semibold text-purple-500">
+                                    {item.convitesNormais ?? item.convites}
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs">
+                                  <span>Cortesias especiais</span>
+                                  <span className="font-semibold text-orange-500">
+                                    {item.cortesias || 0}
                                   </span>
                                 </div>
                                 <div className="flex items-center justify-between">
